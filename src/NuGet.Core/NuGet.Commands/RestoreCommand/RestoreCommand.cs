@@ -71,6 +71,63 @@ namespace NuGet.Commands
 
             var contextForProject = CreateRemoteWalkContext(_request);
 
+            if (_request.RestoreOutputType == RestoreOutputType.DotnetCliTool)
+            {
+                // Read deps.json and download all dependencies.
+                await ExecuteDotnetCliToolRestoreAsync(
+                    contextForProject,
+                    localRepositories,
+                    token);
+            }
+            else
+            {
+                // Walk dependencies and create an assets file.
+                await ExecuteProjectRestoreAsync(
+                    contextForProject,
+                    localRepositories,
+                    token);
+            }
+        }
+
+        private async Task<RestoreResult> ExecuteDotnetCliToolRestoreAsync(
+            RemoteWalkContext contextForProject,
+            List<NuGetv3LocalRepository> localRepositories,
+            CancellationToken token)
+        {
+            var toolDependency = _request.Project.Dependencies.Single().LibraryRange;
+
+            foreach (var localProvider in contextForProject.LocalLibraryProviders)
+            {
+                var library = await localProvider.FindLibraryAsync(
+                    toolDependency,
+                    NuGetFramework.AnyFramework,
+                    _request.CacheContext,
+                    _request.Log,
+                    token);
+
+                var match = new RemoteMatch()
+                {
+                    Library = library,
+                    Provider = localProvider
+                };
+            }
+
+            return null;
+        }
+
+        private async Task<RemoteMatch> GetRemoteMatch(
+            RemoteWalkContext contextForProject,
+            List<NuGetv3LocalRepository> localRepositories,
+            CancellationToken token)
+        {
+            
+        }
+
+        private async Task<RestoreResult> ExecuteProjectRestoreAsync(
+            RemoteWalkContext contextForProject,
+            List<NuGetv3LocalRepository> localRepositories,
+            CancellationToken token)
+        {
             // Restore
             var graphs = await ExecuteRestoreAsync(
                 _request.DependencyProviders.GlobalPackages,
@@ -135,13 +192,6 @@ namespace NuGet.Commands
 
             // Determine the lock file output path
             var projectLockFilePath = GetLockFilePath(lockFile);
-
-            // Tool restores are unique since the output path is not known until after restore
-            if (_request.LockFilePath == null
-                && _request.RestoreOutputType == RestoreOutputType.DotnetCliTool)
-            {
-                _request.LockFilePath = projectLockFilePath;
-            }
 
             // Create result
             return new RestoreResult(
