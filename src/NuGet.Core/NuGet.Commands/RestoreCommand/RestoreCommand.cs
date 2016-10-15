@@ -170,18 +170,9 @@ namespace NuGet.Commands
                 else if (_request.RestoreOutputType == RestoreOutputType.DotnetCliTool)
                 {
                     var toolName = ToolRestoreUtility.GetToolIdOrNullFromSpec(_request.Project);
-                    var lockFileLibrary = ToolRestoreUtility.GetToolTargetLibrary(lockFile, toolName);
+                    var outputPath = _request.Project.RestoreMetadata.OutputPath;
 
-                    if (lockFileLibrary != null)
-                    {
-                        var version = lockFileLibrary.Version;
-
-                        var toolPathResolver = new ToolPathResolver(_request.PackagesDirectory);
-                        projectLockFilePath = toolPathResolver.GetLockFilePath(
-                            toolName,
-                            version,
-                            lockFile.Targets.First().TargetFramework);
-                    }
+                    projectLockFilePath = DotnetCliToolPathResolver.GetFilePath(outputPath, toolName);
                 }
                 else
                 {

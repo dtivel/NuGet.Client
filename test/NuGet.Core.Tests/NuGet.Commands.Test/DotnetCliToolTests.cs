@@ -105,28 +105,29 @@ namespace NuGet.Commands.Test
                 var dgFile = new DependencyGraphSpec();
 
                 var spec = ToolRestoreUtility.GetSpec(
-                    Path.Combine(pathContext.SolutionRoot, "fake.csproj"),
+                    Path.Combine(pathContext.SolutionRoot, "project", "fake.csproj"),
                     "a",
                     VersionRange.Parse("1.0.0"),
                     NuGetFramework.Parse("netcoreapp1.0"));
 
+                spec.RestoreMetadata.OutputPath = Path.Combine(pathContext.SolutionRoot, "project", "obj");
+
                 dgFile.AddProject(spec);
                 dgFile.AddRestore(spec.Name);
 
-                var pathResolver = new ToolPathResolver(pathContext.UserPackagesFolder);
-                var path = pathResolver.GetLockFilePath(
-                    "a",
-                    NuGetVersion.Parse("1.0.0"),
-                    NuGetFramework.Parse("netcoreapp1.0"));
-
                 await SimpleTestPackageUtility.CreateFolderFeedV3(pathContext.PackageSource, new PackageIdentity("a", NuGetVersion.Parse("1.0.0")));
+
+                var outputPath = DotnetCliToolPathResolver.GetFilePath(spec.RestoreMetadata.OutputPath, "a");
+                var outputFile = LockFileFormat.Load(outputPath);
 
                 // Act
                 var result = await CommandsTestUtility.RunSingleRestore(dgFile, pathContext, logger);
 
                 // Assert
                 Assert.True(result.Success, "Failed: " + string.Join(Environment.NewLine, logger.Messages));
-                Assert.True(File.Exists(path));
+                Assert.True(File.Exists(outputPath));
+                Assert.Equal(pathContext.PackageSource, outputFile.PackageFolders.Select(e => e.Path).First());
+                Assert.Equal(pathContext.FallbackFolder, outputFile.PackageFolders.Select(e => e.Path).Skip(1).First());
             }
         }
 
