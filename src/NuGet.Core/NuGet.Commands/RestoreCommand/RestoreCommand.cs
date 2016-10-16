@@ -90,29 +90,26 @@ namespace NuGet.Commands
         }
 
         private async Task<RestoreResult> ExecuteDotnetCliToolRestoreAsync(
-            RemoteWalkContext contextForProject,
-            List<NuGetv3LocalRepository> localRepositories,
+            RemoteWalkContext context,
             CancellationToken token)
         {
-            var toolDependency = _request.Project.Dependencies.Single().LibraryRange;
+            var toolDependencyRange = _request.Project.Dependencies.Single().LibraryRange;
+            var toolWalker = new RemoteToolWalker(contextForProject);
 
-            foreach (var localProvider in contextForProject.LocalLibraryProviders)
-            {
-                var library = await localProvider.FindLibraryAsync(
-                    toolDependency,
-                    NuGetFramework.AnyFramework,
-                    _request.CacheContext,
-                    _request.Log,
-                    token);
+            // Discover tool package frameworks and dependencies
+            var frameworkNodes = await toolWalker.WalkAsync(toolDependencyRange, token);
 
-                var match = new RemoteMatch()
-                {
-                    Library = library,
-                    Provider = localProvider
-                };
-            }
+            var allInstalled = new HashSet<LibraryIdentity>();
+            var toolRestoreCommand = new DotnetCliToolRestoreCommand(_request);
 
-            return null;
+            var graphs =  toolRestoreCommand.TryRestore(
+                toolDependencyRange,
+                allInstalled,
+                _request.DependencyProviders.GlobalPackages,
+                _request.DependencyProviders.FallbackPackageFolders,
+                toolWalker,
+                context,
+                token);
         }
 
         private async Task<RestoreResult> ExecuteProjectRestoreAsync(
