@@ -13,7 +13,7 @@ namespace NuGet.PackageManagement.VisualStudio
 {
     [Export(typeof(IProjectSystemProvider))]
     [Name(nameof(MSBuildNuGetProjectProvider))]
-    [Order(After = nameof(CpsPackageReferenceProjectProvider))]
+    [Order(After = nameof(LegacyCSProjPackageReferenceProjectProvider))]
     public class MSBuildNuGetProjectProvider : IProjectSystemProvider
     {
         public bool TryCreateNuGetProject(EnvDTE.Project envDTEProject, ProjectSystemProviderContext context, out NuGetProject result)
