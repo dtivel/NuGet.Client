@@ -115,14 +115,6 @@ namespace NuGet.Commands
             return null;
         }
 
-        private async Task<RemoteMatch> GetRemoteMatch(
-            RemoteWalkContext contextForProject,
-            List<NuGetv3LocalRepository> localRepositories,
-            CancellationToken token)
-        {
-            
-        }
-
         private async Task<RestoreResult> ExecuteProjectRestoreAsync(
             RemoteWalkContext contextForProject,
             List<NuGetv3LocalRepository> localRepositories,
