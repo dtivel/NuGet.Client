@@ -31,7 +31,7 @@ namespace NuGet.Commands
             _request = request;
         }
 
-        public async Task<Tuple<bool, List<RestoreTargetGraph>>> TryRestore(
+        public async Task<Tuple<DotnetCliToolFile, List<RestoreTargetGraph>>> TryRestore(
             LibraryRange toolRange,
             HashSet<LibraryIdentity> allInstalledPackages,
             NuGetv3LocalRepository userPackageFolder,
@@ -40,6 +40,7 @@ namespace NuGet.Commands
             RemoteWalkContext context,
             CancellationToken token)
         {
+            var toolFile = new DotnetCliToolFile();
             var graphs = new List<RestoreTargetGraph>();
             var success = true;
 
@@ -58,15 +59,20 @@ namespace NuGet.Commands
             if (!ResolutionSucceeded(toolOnlyGraphs))
             {
                 success = false;
+                toolFile.ToolVersion = NuGetVersion.Parse("0.0.0");
             }
             else
             {
                 var toolLibrary = toolNode.Item.Data.Match.Library;
+                toolFile.ToolVersion = toolLibrary.Version;
 
                 await InstallPackagesAsync(toolOnlyGraphs, allInstalledPackages, token);
 
-                var nodes = GetNodesByFramework(userPackageFolder, fallbackPackageFolders, toolNode, toolLibrary);
+                // Deps files is populated by reference
+                var depsFiles = new List<KeyValuePair<NuGetFramework, string>>();
 
+                var nodes = GetNodesByFramework(userPackageFolder, fallbackPackageFolders, toolNode, toolLibrary, depsFiles);
+                 
                 // Populate dependencies and download packages
                 await remoteWalker.WalkAsync(nodes.Values, token);
 
@@ -81,16 +87,46 @@ namespace NuGet.Commands
                 // This happens regardless of success to avoid downloading the packages
                 // again on the next restore.
                 await InstallPackagesAsync(graphs, allInstalledPackages, token);
+
+                // Add deps file paths
+                foreach (var pair in depsFiles)
+                {
+                    toolFile.DepsFiles.Add(pair.Key, pair.Value);
+                }
             }
 
-            return new Tuple<bool, List<RestoreTargetGraph>>(success, graphs);
+            toolFile.Success = success;
+            toolFile.DependencyRange = toolRange.VersionRange;
+            toolFile.ToolId = toolRange.Name;
+
+            // Sources in order
+            toolFile.PackageFolders.Add(userPackageFolder.RepositoryRoot);
+
+            foreach (var fallback in fallbackPackageFolders)
+            {
+                toolFile.PackageFolders.Add(fallback.RepositoryRoot);
+            }
+
+            // TODO: improve this logging
+            var collectorLogger = _request.Log as CollectorLogger;
+
+            if (collectorLogger != null)
+            {
+                foreach (var error in collectorLogger.Errors)
+                {
+                    toolFile.Log.Add(new FileLogEntry(FileLogEntryType.Error, error));
+                }
+            }
+
+            return new Tuple<DotnetCliToolFile, List<RestoreTargetGraph>>(toolFile, graphs);
         }
 
         private static Dictionary<NuGetFramework, GraphNode<RemoteResolveResult>> GetNodesByFramework(
             NuGetv3LocalRepository userPackageFolder,
             IReadOnlyList<NuGetv3LocalRepository> fallbackPackageFolders,
             GraphNode<RemoteResolveResult> toolNode,
-            LibraryIdentity toolLibrary)
+            LibraryIdentity toolLibrary,
+            List<KeyValuePair<NuGetFramework, string>> depsFiles)
         {
             var nodes = new Dictionary<NuGetFramework, GraphNode<RemoteResolveResult>>();
 
@@ -111,7 +147,7 @@ namespace NuGet.Commands
                 throw new InvalidDataException($"Invalid tool package. {toolLibrary.ToString()} does not contain the package type 'DotnetCliTool'.");
             }
 
-            var depsFiles = package.GetLibItems()
+            var depsFileItems = package.GetLibItems()
                 .Select(group => new KeyValuePair<NuGetFramework, string>(
                     group.TargetFramework,
                     GetDepsFilePath(group, toolLibrary.Name, packageInfo.ExpandedPath)))
@@ -119,11 +155,13 @@ namespace NuGet.Commands
                 .ToList();
 
             // Create nodes for each deps file found
-            foreach (var pair in depsFiles)
+            foreach (var pair in depsFileItems)
             {
                 if (!nodes.ContainsKey(pair.Key))
                 {
                     nodes.Add(pair.Key, CopyNodeAndAddDeps(toolNode, pair.Value));
+
+                    depsFiles.Add(pair);
                 }
             }
 
@@ -217,7 +255,7 @@ namespace NuGet.Commands
                     if (parts.Length == 3
                         && parts[2].Equals($"{packageId}.deps.json", StringComparison.OrdinalIgnoreCase))
                     {
-                        return Path.Combine(packageRoot, path);
+                        return Path.GetFullPath(Path.Combine(packageRoot, path));
                     }
                 }
             }

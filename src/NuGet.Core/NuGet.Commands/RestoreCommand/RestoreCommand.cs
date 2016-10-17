@@ -111,10 +111,8 @@ namespace NuGet.Commands
                 context,
                 token);
 
-            _success = result.Item1;
-
             var path = DotnetCliToolPathResolver.GetFilePath(_request.Project.RestoreMetadata.OutputPath, toolDependencyRange.Name);
-            var toolResult = new DotnetCliToolRestoreResult(path, new DotnetCliToolFile());
+            var toolResult = new DotnetCliToolRestoreResult(path, result.Item1);
 
             return new RestoreResult(
                 result.Item2,

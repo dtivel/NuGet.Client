@@ -51,12 +51,12 @@ namespace NuGet.ProjectModel
         /// <summary>
         /// Framework -> Lib folder path
         /// </summary>
-        public IDictionary<NuGetFramework, string> Targets { get; set; } = new Dictionary<NuGetFramework, string>();
+        public IDictionary<NuGetFramework, string> DepsFiles { get; set; } = new Dictionary<NuGetFramework, string>();
 
         /// <summary>
         /// Restore errors and warnings.
         /// </summary>
-        public IList<FileLogEntry> Log = new List<FileLogEntry>();
+        public IList<FileLogEntry> Log { get; set; } = new List<FileLogEntry>();
 
         public DotnetCliToolFile(JObject json)
         {
@@ -104,12 +104,75 @@ namespace NuGet.ProjectModel
         {
             var json = new JObject();
 
+            json.Add("formatVersion", spec.FormatVersion);
+            json.Add("success", spec.Success);
+            json.Add("toolId", spec.ToolId);
+            json.Add("toolVersion", spec.ToolVersion.ToNormalizedString());
+            json.Add("dependencyRange", spec.DependencyRange.ToNormalizedString());
+
+            var targetsObj = new JObject();
+            json.Add("depsFiles", targetsObj);
+
+            foreach (var target in spec.DepsFiles)
+            {
+                targetsObj.Add(target.Key.ToString(), target.Value);
+            }
+
+            var packageFoldersObj = new JObject();
+            json.Add("packageFolders", packageFoldersObj);
+
+            foreach (var folder in spec.PackageFolders)
+            {
+                packageFoldersObj.Add(folder, new JObject());
+            }
+
+            var logArray = new JArray();
+            json.Add("log", logArray);
+
+            foreach (var entry in spec.Log)
+            {
+                var entryObj = new JObject();
+                logArray.Add(entryObj);
+
+                entryObj.Add("type", entry.Type.ToString().ToString().ToLowerInvariant());
+                entryObj.Add("message", entry.Message);
+            }
+
             return json;
         }
 
         private void ParseJson(JObject json)
         {
-            var restoreObj = json.GetValue<JObject>("restore");
+            FormatVersion = json.GetValue<int>("formatVersion");
+            Success = json.GetValue<bool>("success");
+            ToolId = json.GetValue<string>("toolId");
+            ToolVersion = NuGetVersion.Parse(json.GetValue<string>("toolVersion"));
+            DependencyRange = VersionRange.Parse(json.GetValue<string>("dependencyRange"));
+
+            foreach (var prop in json.GetValue<JObject>("depsFiles").Properties())
+            {
+                var framework = NuGetFramework.Parse(prop.Name);
+
+                if (!DepsFiles.ContainsKey(framework)
+                    && framework.IsSpecificFramework)
+                {
+                    DepsFiles.Add(framework, prop.Value.ToObject<string>());
+                }
+            }
+
+            foreach (var prop in json.GetValue<JObject>("packageFolders").Properties())
+            {
+                PackageFolders.Add(prop.Name);
+            }
+
+            foreach (var entry in json.GetValue<JArray>("log"))
+            {
+                FileLogEntryType entryType;
+                var typeString = entry.GetValue<string>("type");
+                Enum.TryParse<FileLogEntryType>(typeString, ignoreCase: true, result: out entryType);
+
+                Log.Add(new FileLogEntry(entryType, entry.GetValue<string>("message")));
+            }
         }
 
         private static JObject ReadJson(string packageSpecPath)

@@ -140,13 +140,71 @@ namespace NuGet.Commands.Test
                 var result = await CommandsTestUtility.RunSingleRestore(dgFile, pathContext, logger);
 
                 var outputPath = DotnetCliToolPathResolver.GetFilePath(spec.RestoreMetadata.OutputPath, "a");
-                var outputFile = LockFileFormat.Load(outputPath);
+                var outputFile = DotnetCliToolFile.Load(outputPath);
 
                 // Assert
                 Assert.True(result.Success, "Failed: " + string.Join(Environment.NewLine, logger.Messages));
                 Assert.True(File.Exists(outputPath));
-                Assert.Equal(pathContext.PackageSource, outputFile.PackageFolders.Select(e => e.Path).First());
-                Assert.Equal(pathContext.FallbackFolder, outputFile.PackageFolders.Select(e => e.Path).Skip(1).First());
+                Assert.True(outputFile.Success);
+                Assert.Equal(pathContext.UserPackagesFolder, outputFile.PackageFolders.First());
+                Assert.Equal(pathContext.FallbackFolder, outputFile.PackageFolders.Skip(1).First());
+                Assert.Equal(VersionRange.Parse("1.0.0"), outputFile.DependencyRange);
+                Assert.Equal(NuGetVersion.Parse("1.0.0"), outputFile.ToolVersion);
+                Assert.Equal("a", outputFile.ToolId);
+            }
+        }
+
+        [Fact]
+        public async Task DotnetCliTool_BasicToolRestore_MissingDependency()
+        {
+            // Arrange
+            using (var pathContext = new SimpleTestPathContext())
+            {
+                var logger = new TestLogger();
+                var dgFile = new DependencyGraphSpec();
+
+                var spec = ToolRestoreUtility.GetSpec(
+                    Path.Combine(pathContext.SolutionRoot, "project", "fake.csproj"),
+                    "a",
+                    VersionRange.Parse("1.0.0"),
+                    NuGetFramework.Parse("netcoreapp1.0"));
+
+                spec.RestoreMetadata.OutputPath = Path.Combine(pathContext.SolutionRoot, "project", "obj");
+
+                dgFile.AddProject(spec);
+                dgFile.AddRestore(spec.Name);
+
+                var toolContext = new SimpleTestPackageContext()
+                {
+                    Id = "a",
+                    Version = "1.0.0"
+                };
+
+                toolContext.PackageTypes.Add(PackageType.DotnetCliTool);
+                toolContext.AddFile("lib/netcoreapp1.0/a.deps.json", DepsJson);
+
+                await SimpleTestPackageUtility.CreateFolderFeedV3(
+                    pathContext.PackageSource,
+                    PackageSaveMode.Defaultv3,
+                    toolContext);
+
+                // Act
+                var result = await CommandsTestUtility.RunSingleRestore(dgFile, pathContext, logger);
+
+                var outputPath = DotnetCliToolPathResolver.GetFilePath(spec.RestoreMetadata.OutputPath, "a");
+                var outputFile = DotnetCliToolFile.Load(outputPath);
+
+                // Assert
+                Assert.False(result.Success, "Failed: " + string.Join(Environment.NewLine, logger.Messages));
+                Assert.True(File.Exists(outputPath));
+                Assert.False(outputFile.Success);
+                Assert.Equal(pathContext.UserPackagesFolder, outputFile.PackageFolders.First());
+                Assert.Equal(pathContext.FallbackFolder, outputFile.PackageFolders.Skip(1).First());
+                Assert.Equal(VersionRange.Parse("1.0.0"), outputFile.DependencyRange);
+                Assert.Equal(NuGetVersion.Parse("1.0.0"), outputFile.ToolVersion);
+                Assert.Equal("a", outputFile.ToolId);
+                Assert.Equal(FileLogEntryType.Error, outputFile.Log.Single().Type);
+                Assert.Equal("Unable to resolve 'b (= 1.0.0)' for '.NETCoreApp,Version=v1.0'.", outputFile.Log.Single().Message);
             }
         }
 
