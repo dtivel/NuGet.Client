@@ -74,15 +74,14 @@ namespace NuGet.Commands
             if (_request.RestoreOutputType == RestoreOutputType.DotnetCliTool)
             {
                 // Read deps.json and download all dependencies.
-                await ExecuteDotnetCliToolRestoreAsync(
+                return await ExecuteDotnetCliToolRestoreAsync(
                     contextForProject,
-                    localRepositories,
                     token);
             }
             else
             {
                 // Walk dependencies and create an assets file.
-                await ExecuteProjectRestoreAsync(
+                return await ExecuteProjectRestoreAsync(
                     contextForProject,
                     localRepositories,
                     token);
@@ -95,9 +94,6 @@ namespace NuGet.Commands
         {
             var toolDependencyRange = _request.Project.Dependencies.Single().LibraryRange;
             var toolWalker = new RemoteToolWalker(context);
-
-            // Discover tool package frameworks and dependencies
-            var frameworkNodes = await toolWalker.WalkAsync(toolDependencyRange, token);
 
             var allInstalled = new HashSet<LibraryIdentity>();
             var toolRestoreCommand = new DotnetCliToolRestoreCommand(_request);

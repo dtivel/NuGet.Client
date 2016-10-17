@@ -14,6 +14,9 @@ using NuGet.Versioning;
 
 namespace NuGet.DependencyResolver
 {
+    /// <summary>
+    /// Walks a single package or single level of dependencies.
+    /// </summary>
     public class RemoteToolWalker
     {
         private readonly RemoteWalkContext _context;
@@ -27,67 +30,53 @@ namespace NuGet.DependencyResolver
             _context = context;
         }
 
-        public async Task<IDictionary<NuGetFramework, GraphNode<RemoteResolveResult>>> WalkAsync(LibraryRange toolLibrary, CancellationToken token)
+        /// <summary>
+        /// Return a single package, this will not add or walk dependencies.
+        /// </summary>
+        public async Task<GraphNode<RemoteResolveResult>> GetNodeAsync(LibraryRange library, CancellationToken token)
         {
-            // Resolve the tool package
-            var frameworkNodes = await GetRootNodes(toolLibrary, token);
-
-            // Resolve dependencies of the tool package
-            var tasks = frameworkNodes.Values.Select(root => ApplyDependencyNodes(root, token));
-
-            // Wait for all packages to be resolved
-            await Task.WhenAll(tasks);
-
-            return frameworkNodes;
-        }
-
-        private async Task<IDictionary<NuGetFramework, GraphNode<RemoteResolveResult>>> GetRootNodes(LibraryRange toolLibrary, CancellationToken token)
-        {
-            var roots = new Dictionary<NuGetFramework, GraphNode<RemoteResolveResult>>();
-
             var match = await RemoteMatchUtility.FindLibraryMatch(
-                libraryRange: toolLibrary,
+                libraryRange: library,
+                framework: NuGetFramework.AgnosticFramework,
+                outerEdge: null,
                 context: _context,
                 cancellationToken: token);
 
             if (match != null)
             {
-                // Read all dependencies from the deps files
-                var allDependencies = await match.Provider.GetToolDependenciesAsync(
-                    match: match.Library,
-                    cacheContext: _context.CacheContext,
-                    logger: _context.Logger,
-                    cancellationToken: token);
+                var node = new GraphNode<RemoteResolveResult>(library);
 
-                // Create nodes for each discovered target framework
-                foreach (var framework in allDependencies.Keys)
+                node.Item = new GraphItem<RemoteResolveResult>(match.Library)
                 {
-                    var node = new GraphNode<RemoteResolveResult>(toolLibrary);
-
-                    node.Item = new GraphItem<RemoteResolveResult>(match.Library)
+                    Data = new RemoteResolveResult()
                     {
-                        Data = new RemoteResolveResult()
-                        {
-                            Match = match,
-                            Dependencies = allDependencies[framework].Select(ToToolDependency).ToArray()
-                        }
-                    };
+                        Match = match,
+                        Dependencies = Enumerable.Empty<LibraryDependency>()
+                    }
+                };
 
-                    roots.Add(framework, node);
-                }
+                return node;
             }
             else
             {
                 // Unable to find tool
-                var node = new GraphNode<RemoteResolveResult>(toolLibrary)
+                var node = new GraphNode<RemoteResolveResult>(library)
                 {
-                    Item = RemoteMatchUtility.CreateUnresolvedMatch(toolLibrary)
+                    Item = RemoteMatchUtility.CreateUnresolvedMatch(library)
                 };
 
-                roots.Add(FrameworkConstants.CommonFrameworks.NetCoreApp10, node);
+                return node;
             }
+        }
 
-            return roots;
+        /// <summary>
+        /// Populate all dependencies.
+        /// </summary>
+        public async void WalkAsync(IEnumerable<GraphNode<RemoteResolveResult>> nodes, CancellationToken token)
+        {
+            // Resolve dependencies of the tool package
+            // Wait for all packages to be resolved
+            await Task.WhenAll(nodes.Select(root => ApplyDependencyNodes(root, token)));
         }
 
         private async Task ApplyDependencyNodes(GraphNode<RemoteResolveResult> root, CancellationToken token)
@@ -151,6 +140,8 @@ namespace NuGet.DependencyResolver
 
             var match = await RemoteMatchUtility.FindLibraryMatch(
                 libraryRange: library,
+                framework: NuGetFramework.AgnosticFramework,
+                outerEdge: null,
                 context: _context,
                 cancellationToken: token);
 

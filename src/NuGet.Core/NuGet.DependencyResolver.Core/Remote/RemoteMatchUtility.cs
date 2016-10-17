@@ -14,9 +14,11 @@ namespace NuGet.DependencyResolver
     internal static class RemoteMatchUtility
     {
         internal static async Task<RemoteMatch> FindLibraryMatch(
-           LibraryRange libraryRange,
-           RemoteWalkContext context,
-           CancellationToken cancellationToken)
+            LibraryRange libraryRange,
+            NuGetFramework framework,
+            GraphEdge<RemoteResolveResult> outerEdge,
+            RemoteWalkContext context,
+            CancellationToken cancellationToken)
         {
             if (libraryRange == null)
             {
@@ -47,12 +49,12 @@ namespace NuGet.DependencyResolver
             if (libraryRange.VersionRange.IsFloating)
             {
                 // For snapshot dependencies, get the version remotely first.
-                var remoteMatch = await FindLibraryByVersion(libraryRange, context.RemoteLibraryProviders, context, cancellationToken);
+                var remoteMatch = await FindLibraryByVersion(libraryRange, framework, context.RemoteLibraryProviders, context, cancellationToken);
                 if (remoteMatch != null)
                 {
                     // Try to see if the specific version found on the remote exists locally. This avoids any unnecessary
                     // remote access incase we already have it in the cache/local packages folder. 
-                    var localMatch = await FindLibraryByVersion(remoteMatch.Library, context.LocalLibraryProviders, context, cancellationToken);
+                    var localMatch = await FindLibraryByVersion(remoteMatch.Library, framework, context.LocalLibraryProviders, context, cancellationToken);
 
                     if (localMatch != null
                         && localMatch.Library.Version.Equals(remoteMatch.Library.Version))
@@ -70,7 +72,7 @@ namespace NuGet.DependencyResolver
             else
             {
                 // Check for the specific version locally.
-                var localMatch = await FindLibraryByVersion(libraryRange, context.LocalLibraryProviders, context, cancellationToken);
+                var localMatch = await FindLibraryByVersion(libraryRange, framework, context.LocalLibraryProviders, context, cancellationToken);
 
                 if (localMatch != null
                     && localMatch.Library.Version.Equals(libraryRange.VersionRange.MinVersion))
@@ -81,14 +83,14 @@ namespace NuGet.DependencyResolver
 
                 // Either we found a local match but it wasn't the exact version, or 
                 // we didn't find a local match.
-                var remoteMatch = await FindLibraryByVersion(libraryRange, context.RemoteLibraryProviders, context, cancellationToken);
+                var remoteMatch = await FindLibraryByVersion(libraryRange, framework, context.RemoteLibraryProviders, context, cancellationToken);
 
                 if (remoteMatch != null
                     && localMatch == null)
                 {
                     // There wasn't any local match for the specified version but there was a remote match.
                     // See if that version exists locally.
-                    localMatch = await FindLibraryByVersion(remoteMatch.Library, context.LocalLibraryProviders, context, cancellationToken);
+                    localMatch = await FindLibraryByVersion(remoteMatch.Library, framework, context.LocalLibraryProviders, context, cancellationToken);
                 }
 
                 if (localMatch != null
@@ -115,6 +117,7 @@ namespace NuGet.DependencyResolver
 
         private static async Task<RemoteMatch> FindLibraryByVersion(
             LibraryRange libraryRange,
+            NuGetFramework framework,
             IEnumerable<IRemoteDependencyProvider> providers,
             RemoteWalkContext context,
             CancellationToken token)
@@ -127,6 +130,7 @@ namespace NuGet.DependencyResolver
                     providers,
                     provider => provider.FindLibraryAsync(
                         libraryRange,
+                        framework,
                         context.CacheContext,
                         context.Logger,
                         token));
@@ -138,6 +142,7 @@ namespace NuGet.DependencyResolver
                 providers.Where(p => !p.IsHttp),
                 provider => provider.FindLibraryAsync(
                     libraryRange,
+                    framework,
                     context.CacheContext,
                     context.Logger,
                     token));
@@ -154,6 +159,7 @@ namespace NuGet.DependencyResolver
                 providers.Where(p => p.IsHttp),
                 provider => provider.FindLibraryAsync(
                     libraryRange,
+                    framework,
                     context.CacheContext,
                     context.Logger,
                     token));
