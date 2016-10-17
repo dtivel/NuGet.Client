@@ -18,12 +18,6 @@ namespace NuGet.DependencyResolver
 
         Task<LibraryIdentity> FindLibraryAsync(
             LibraryRange libraryRange,
-            SourceCacheContext cacheContext,
-            ILogger logger,
-            CancellationToken cancellationToken);
-
-        Task<LibraryIdentity> FindLibraryAsync(
-            LibraryRange libraryRange,
             NuGetFramework targetFramework,
             SourceCacheContext cacheContext,
             ILogger logger,
@@ -32,17 +26,6 @@ namespace NuGet.DependencyResolver
         Task<IEnumerable<LibraryDependency>> GetDependenciesAsync(
             LibraryIdentity match,
             NuGetFramework targetFramework,
-            SourceCacheContext cacheContext,
-            ILogger logger,
-            CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Read dependencies from .deps files contained in the package.
-        /// Dependencies are grouped by the NuGetFramework folder they 
-        /// reside under.
-        /// </summary>
-        Task<IDictionary<NuGetFramework, IEnumerable<LibraryIdentity>>> GetToolDependenciesAsync(
-            LibraryIdentity match,
             SourceCacheContext cacheContext,
             ILogger logger,
             CancellationToken cancellationToken);

@@ -94,7 +94,7 @@ namespace NuGet.Commands
             CancellationToken token)
         {
             var toolDependencyRange = _request.Project.Dependencies.Single().LibraryRange;
-            var toolWalker = new RemoteToolWalker(contextForProject);
+            var toolWalker = new RemoteToolWalker(context);
 
             // Discover tool package frameworks and dependencies
             var frameworkNodes = await toolWalker.WalkAsync(toolDependencyRange, token);
@@ -102,7 +102,7 @@ namespace NuGet.Commands
             var allInstalled = new HashSet<LibraryIdentity>();
             var toolRestoreCommand = new DotnetCliToolRestoreCommand(_request);
 
-            var graphs =  toolRestoreCommand.TryRestore(
+            var result = await toolRestoreCommand.TryRestore(
                 toolDependencyRange,
                 allInstalled,
                 _request.DependencyProviders.GlobalPackages,
@@ -110,6 +110,19 @@ namespace NuGet.Commands
                 toolWalker,
                 context,
                 token);
+
+            _success = result.Item1;
+
+            return new RestoreResult(
+                result.Item1,
+                result.Item2,
+                compatibilityCheckResults: Enumerable.Empty<CompatibilityCheckResult>(),
+                lockFile: null,
+                previousLockFile: null,
+                lockFilePath: null,
+                msbuild: new MSBuildRestoreResult(targetsPath: null, propsPath: null, success: true),
+                toolRestoreResults: Enumerable.Empty<ToolRestoreResult>(),
+                outputType: _request.RestoreOutputType);
         }
 
         private async Task<RestoreResult> ExecuteProjectRestoreAsync(
