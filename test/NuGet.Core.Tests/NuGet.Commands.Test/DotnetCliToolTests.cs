@@ -115,13 +115,32 @@ namespace NuGet.Commands.Test
                 dgFile.AddProject(spec);
                 dgFile.AddRestore(spec.Name);
 
-                await SimpleTestPackageUtility.CreateFolderFeedV3(pathContext.PackageSource, new PackageIdentity("a", NuGetVersion.Parse("1.0.0")));
+                var toolContext = new SimpleTestPackageContext()
+                {
+                    Id = "a",
+                    Version = "1.0.0"
+                };
 
-                var outputPath = DotnetCliToolPathResolver.GetFilePath(spec.RestoreMetadata.OutputPath, "a");
-                var outputFile = LockFileFormat.Load(outputPath);
+                toolContext.PackageTypes.Add(PackageType.DotnetCliTool);
+                toolContext.AddFile("lib/netcoreapp1.0/a.deps.json", DepsJson);
+
+                var bContext = new SimpleTestPackageContext()
+                {
+                    Id = "b",
+                    Version = "1.0.0"
+                };
+
+                await SimpleTestPackageUtility.CreateFolderFeedV3(
+                    pathContext.PackageSource,
+                    PackageSaveMode.Defaultv3,
+                    toolContext,
+                    bContext);
 
                 // Act
                 var result = await CommandsTestUtility.RunSingleRestore(dgFile, pathContext, logger);
+
+                var outputPath = DotnetCliToolPathResolver.GetFilePath(spec.RestoreMetadata.OutputPath, "a");
+                var outputFile = LockFileFormat.Load(outputPath);
 
                 // Assert
                 Assert.True(result.Success, "Failed: " + string.Join(Environment.NewLine, logger.Messages));
@@ -230,5 +249,50 @@ namespace NuGet.Commands.Test
                 }
             }
         }
+
+        private static string DepsJson = @"{
+                      ""runtimeTarget"": {
+                        ""name"": "".NETCoreApp,Version=v1.0"",
+                        ""signature"": ""09db60146a5b8a0d40c5ea0fb7485ab3bbdd4a1a""
+                      },
+                      ""compilationOptions"": {},
+                      ""targets"": {
+                        "".NETCoreApp,Version=v1.0"": {
+                          ""a/1.0.0"": {
+                            ""dependencies"": {
+                              ""b"": ""1.0.0""
+                            },
+                            ""runtime"": {
+                              ""dotnetnew.dll"": {}
+                            }
+                          },
+                          ""b/1.0.0"": {
+                            ""dependencies"": {
+                              ""System.Runtime.Serialization.Primitives"": ""4.1.1""
+                            },
+                            ""runtime"": {
+                              ""lib/netstandard1.0/Newtonsoft.Json.dll"": {}
+                            }
+                          },
+                          ""System.Runtime.Serialization.Primitives/4.1.1"": {
+                            ""runtime"": {
+                              ""lib/netstandard1.3/System.Runtime.Serialization.Primitives.dll"": {}
+                            }
+                          }
+                        }
+                      },
+                      ""libraries"": {
+                        ""a/1.0.0"": {
+                          ""type"": ""project"",
+                          ""serviceable"": false,
+                          ""sha512"": """"
+                        },
+                        ""b/1.0.0"": {
+                          ""type"": ""package"",
+                          ""serviceable"": true,
+                          ""sha512"": ""sha512-U82mHQSKaIk+lpSVCbWYKNavmNH1i5xrExDEquU1i6I5pV6UMOqRnJRSlKO3cMPfcpp0RgDY+8jUXHdQ4IfXvw==""
+                        }
+                      }
+                    }";
     }
 }

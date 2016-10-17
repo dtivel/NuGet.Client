@@ -72,7 +72,7 @@ namespace NuGet.DependencyResolver
         /// <summary>
         /// Populate all dependencies.
         /// </summary>
-        public async void WalkAsync(IEnumerable<GraphNode<RemoteResolveResult>> nodes, CancellationToken token)
+        public async Task WalkAsync(IEnumerable<GraphNode<RemoteResolveResult>> nodes, CancellationToken token)
         {
             // Resolve dependencies of the tool package
             // Wait for all packages to be resolved
@@ -106,24 +106,6 @@ namespace NuGet.DependencyResolver
                 Item = await FindToolDependencyCached(
                     libraryRange: library,
                     token: token)
-            };
-        }
-
-        /// <summary>
-        /// Identity -> Dependency with a range allowing a single version.
-        /// </summary>
-        private static LibraryDependency ToToolDependency(LibraryIdentity library)
-        {
-            return new LibraryDependency()
-            {
-                LibraryRange = new LibraryRange(
-                            name: library.Name,
-                            versionRange: new VersionRange(
-                                minVersion: library.Version,
-                                includeMinVersion: true,
-                                maxVersion: library.Version,
-                                includeMaxVersion: true),
-                            typeConstraint: LibraryDependencyTarget.Package)
             };
         }
 

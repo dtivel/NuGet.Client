@@ -9,7 +9,7 @@ using NuGet.Packaging;
 
 namespace NuGet.ProjectModel
 {
-    public class DotnetCliToolPathResolver
+    public static class DotnetCliToolPathResolver
     {
         /// <summary>
         /// Gives the full path to the tool file.

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,10 +10,16 @@ using NuGet.DependencyResolver;
 using NuGet.Frameworks;
 using NuGet.LibraryModel;
 using NuGet.Packaging;
+using NuGet.Packaging.Core;
+using NuGet.ProjectModel;
 using NuGet.Repositories;
+using NuGet.Versioning;
 
 namespace NuGet.Commands
 {
+    /// <summary>
+    /// Restores DotnetCliTool type packages.
+    /// </summary>
     internal class DotnetCliToolRestoreCommand
     {
         private readonly ILogger _logger;
@@ -32,6 +40,9 @@ namespace NuGet.Commands
             RemoteWalkContext context,
             CancellationToken token)
         {
+            var graphs = new List<RestoreTargetGraph>();
+            var success = true;
+
             var toolNode = await remoteWalker.GetNodeAsync(toolRange, token);
 
             var toolOnlyGraph = RestoreTargetGraph.Create(
@@ -40,17 +51,178 @@ namespace NuGet.Commands
                 _request.Log,
                 NuGetFramework.AgnosticFramework);
 
-            await InstallPackagesAsync(new[] { toolOnlyGraph }, allInstalledPackages, token);
+            var toolOnlyGraphs = new[] { toolOnlyGraph };
+
+            // Verify that the tool package needed to complete
+            // the remaining part of the restore was acquired.
+            if (!ResolutionSucceeded(toolOnlyGraphs))
+            {
+                success = false;
+            }
+            else
+            {
+                var toolLibrary = toolNode.Item.Data.Match.Library;
+
+                await InstallPackagesAsync(toolOnlyGraphs, allInstalledPackages, token);
+
+                var nodes = GetNodesByFramework(userPackageFolder, fallbackPackageFolders, toolNode, toolLibrary);
+
+                // Populate dependencies and download packages
+                await remoteWalker.WalkAsync(nodes.Values, token);
+
+                // Create graphs from populated nodes
+                graphs.AddRange(nodes.Select(pair =>
+                    RestoreTargetGraph.Create(new[] { pair.Value }, context, _request.Log, pair.Key)));
+
+                // Validate package graphs
+                success = ResolutionSucceeded(graphs);
+
+                // Install packages to the user packages folder
+                // This happens regardless of success to avoid downloading the packages
+                // again on the next restore.
+                await InstallPackagesAsync(graphs, allInstalledPackages, token);
+            }
+
+            return new Tuple<bool, List<RestoreTargetGraph>>(success, graphs);
+        }
+
+        private static Dictionary<NuGetFramework, GraphNode<RemoteResolveResult>> GetNodesByFramework(
+            NuGetv3LocalRepository userPackageFolder,
+            IReadOnlyList<NuGetv3LocalRepository> fallbackPackageFolders,
+            GraphNode<RemoteResolveResult> toolNode,
+            LibraryIdentity toolLibrary)
+        {
+            var nodes = new Dictionary<NuGetFramework, GraphNode<RemoteResolveResult>>();
 
             var localRepositories = new List<NuGetv3LocalRepository>();
             localRepositories.Add(userPackageFolder);
             localRepositories.AddRange(fallbackPackageFolders);
 
-            foreach (var local in localRepositories)
+            // Read the package, this is expected to be there.
+            // A missing package will error out before this.
+            var packageInfo = NuGetv3LocalRepositoryUtility
+                .GetPackage(localRepositories, toolLibrary.Name, toolLibrary.Version)
+                .Package;
+
+            var package = packageInfo.GetPackage();
+
+            if (!package.NuspecReader.GetPackageTypes().Contains(PackageType.DotnetCliTool))
             {
-  
+                throw new InvalidDataException($"Invalid tool package. {toolLibrary.ToString()} does not contain the package type 'DotnetCliTool'.");
             }
 
+            var depsFiles = package.GetLibItems()
+                .Select(group => new KeyValuePair<NuGetFramework, string>(
+                    group.TargetFramework,
+                    GetDepsFilePath(group, toolLibrary.Name, packageInfo.ExpandedPath)))
+                .Where(pair => pair.Value != null)
+                .ToList();
+
+            // Create nodes for each deps file found
+            foreach (var pair in depsFiles)
+            {
+                if (!nodes.ContainsKey(pair.Key))
+                {
+                    nodes.Add(pair.Key, CopyNodeAndAddDeps(toolNode, pair.Value));
+                }
+            }
+
+            return nodes;
+        }
+
+        /// <summary>
+        /// Verify all packages were found.
+        /// </summary>
+        private bool ResolutionSucceeded(IEnumerable<RestoreTargetGraph> graphs)
+        {
+            var success = true;
+
+            foreach (var graph in graphs)
+            {
+                if (graph.Unresolved.Any())
+                {
+                    success = false;
+                    foreach (var unresolved in graph.Unresolved)
+                    {
+                        var displayVersionRange = unresolved.VersionRange.ToNonSnapshotRange().PrettyPrint();
+                        var packageDisplayName = $"{unresolved.Name} {displayVersionRange}";
+
+                        var message = string.Format(CultureInfo.CurrentCulture,
+                            Strings.Log_UnresolvedDependency,
+                            packageDisplayName,
+                            graph.Name);
+
+                        _logger.LogError(message);
+                    }
+                }
+            }
+
+            return success;
+        }
+
+        private static GraphNode<RemoteResolveResult> CopyNodeAndAddDeps(GraphNode<RemoteResolveResult> toolNode, string depsPath)
+        {
+            var depsContent = LockFileFormat.Load(depsPath);
+
+            var dependencies = depsContent.Libraries.Where(lib =>
+                    StringComparer.OrdinalIgnoreCase.Equals(lib.Type, LibraryType.Package)
+                    && !StringComparer.OrdinalIgnoreCase.Equals(toolNode.Item.Data.Match.Library.Name, lib.Name))
+                .Select(lib => new LibraryIdentity(lib.Name, lib.Version, LibraryType.Package))
+                .Select(ToToolDependency)
+                .ToList();
+
+            return new GraphNode<RemoteResolveResult>(toolNode.Key)
+            {
+                Item = new GraphItem<RemoteResolveResult>(toolNode.Item.Key)
+                {
+                    Data = new RemoteResolveResult()
+                    {
+                        Match = toolNode.Item.Data.Match,
+                        Dependencies = dependencies
+                    }
+                }
+            };
+        }
+
+        /// <summary>
+        /// Identity -> Dependency with a range allowing a single version.
+        /// </summary>
+        private static LibraryDependency ToToolDependency(LibraryIdentity library)
+        {
+            return new LibraryDependency()
+            {
+                LibraryRange = new LibraryRange(
+                            name: library.Name,
+                            versionRange: new VersionRange(
+                                minVersion: library.Version,
+                                includeMinVersion: true,
+                                maxVersion: library.Version,
+                                includeMaxVersion: true),
+                            typeConstraint: LibraryDependencyTarget.Package)
+            };
+        }
+
+        private static string GetDepsFilePath(FrameworkSpecificGroup group, string packageId, string packageRoot)
+        {
+            if (StringComparer.OrdinalIgnoreCase.Equals(
+                FrameworkConstants.FrameworkIdentifiers.NetCoreApp,
+                group.TargetFramework.Framework))
+            {
+                foreach (var path in group.Items)
+                {
+                    // lib/tfm/id.deps.json
+                    // Package readers normalize all paths to use '/'
+                    var parts = path.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    if (parts.Length == 3
+                        && parts[2].Equals($"{packageId}.deps.json", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return Path.Combine(packageRoot, path);
+                    }
+                }
+            }
+
+            // not found
             return null;
         }
 
