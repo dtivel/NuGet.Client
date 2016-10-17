@@ -921,6 +921,9 @@ namespace NuGetVSExtension
                 throw new InvalidOperationException(Strings.SolutionIsNotSaved);
             }
 
+            // make sure all projects are loaded before showing manager ui even with DPL enabled.
+            solutionManager.EnsureSolutionIsLoaded();
+
             var projects = solutionManager.GetNuGetProjects();
             if (!projects.Any())
             {

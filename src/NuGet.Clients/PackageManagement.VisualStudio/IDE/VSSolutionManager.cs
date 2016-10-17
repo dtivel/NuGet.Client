@@ -266,6 +266,47 @@ namespace NuGet.PackageManagement.VisualStudio
             }
         }
 
+        public bool IsSolutionDPLEnabled
+        {
+            get
+            {
+#if VS15
+                return ThreadHelper.JoinableTaskFactory.Run(async delegate
+                {
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                    var vsSolution7 = _vsSolution as IVsSolution7;
+
+                    if (vsSolution7 != null && vsSolution7.IsSolutionLoadDeferred())
+                    {
+                        return true;
+                    }
+
+                    return false;
+                });
+#elif VS14
+                // for Dev14 always return false since DPL not exists there.
+                return false;
+#endif
+            }
+        }
+
+        public void EnsureSolutionIsLoaded()
+        {
+            ThreadHelper.JoinableTaskFactory.Run(async delegate
+            {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                IVsSolution4 vsSolution4 = _vsSolution as IVsSolution4;
+
+                if (vsSolution4 != null)
+                {
+                    // ignore result and continue. Since results may be incomplete if user canceled.
+                    vsSolution4.EnsureSolutionIsLoaded((uint)__VSBSLFLAGS.VSBSLFLAGS_None);
+                }
+            });
+        }
+
         public string SolutionDirectory
         {
             get
@@ -738,7 +779,7 @@ namespace NuGet.PackageManagement.VisualStudio
             dependentEnvDTEProjects.Add(dependentEnvDTEProject);
         }
 
-        #region IVsSelectionEvents implementation
+#region IVsSelectionEvents implementation
 
         public int OnCmdUIContextChanged(uint dwCmdUICookie, int fActive)
         {
@@ -770,6 +811,6 @@ namespace NuGet.PackageManagement.VisualStudio
             }
         }
 
-        #endregion IVsSelectionEvents implementation
+#endregion IVsSelectionEvents implementation
     }
 }
