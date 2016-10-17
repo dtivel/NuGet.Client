@@ -1,5 +1,4 @@
-﻿#if VS15
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -31,7 +30,7 @@ namespace NuGet.PackageManagement.VisualStudio
             string projectName, 
             string projectUniqueName, 
             string projectFullPath, 
-            PackageReferences packageReferences, 
+            PackageReferences packageReferences,
             Func<PackageSpec> packageSpecFactory)
         {
             if (projectFullPath == null)
@@ -60,43 +59,45 @@ namespace NuGet.PackageManagement.VisualStudio
 
         public override Task<IEnumerable<PackageReference>> GetInstalledPackagesAsync(CancellationToken token)
         {
-            //TODO: Figure out the right API to call the list of packages installed.
-            //            var configuredProject = await _packageReferences.TryGetReference()
+            //TODO: Have an API exposed (not written yet) which gives us a list of installed package names. From this we can use
+            //      the TryGetReference API to fetch versions and any other required metadata.
             var list = Enumerable.Empty<PackageReference>();
             return System.Threading.Tasks.Task.FromResult(list);
         }
 
-        public override Task<Boolean> InstallPackageAsync(PackageIdentity packageIdentity, DownloadResourceResult downloadResourceResult, INuGetProjectContext nuGetProjectContext, CancellationToken token)
+        public override async Task<Boolean> InstallPackageAsync(PackageIdentity packageIdentity, DownloadResourceResult downloadResourceResult, INuGetProjectContext nuGetProjectContext, CancellationToken token)
         {
             try
             {
-                _packageReferences.AddOrUpdate(packageIdentity.Id, packageIdentity.Version.ToString(), new string[] { }, new string[] { });
+                await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                //TODO: add metadata
+                _packageReferences..AddOrUpdate(packageIdentity.Id, packageIdentity.Version.ToString(), new string[] { }, new string[] { });
             }
             catch (Exception e)
             {
-                System.Console.Write(e);
+                nuGetProjectContext.Log(MessageLevel.Warning, e.Message, packageIdentity, _projectName);
+                return false;
             }
-            //var result = await
-            //    configuredProject.Services.PackageReferences.AddAsync
-            //    (packageIdentity.Id, packageIdentity.Version.ToString());
-            //if (!result.Added)
-            //{
-            //    var existingReference = result.Reference;
-            //    await existingReference.Metadata.SetPropertyValueAsync("Version", packageIdentity.Version.ToString());
-            //}
 
-            //TODO: Set additional metadata here.
-            return System.Threading.Tasks.Task.FromResult(true);
+            return true;
         }
 
-        public override Task<Boolean> UninstallPackageAsync(PackageIdentity packageIdentity, INuGetProjectContext nuGetProjectContext, CancellationToken token)
+        public override async Task<Boolean> UninstallPackageAsync(PackageIdentity packageIdentity, INuGetProjectContext nuGetProjectContext, CancellationToken token)
         {
-            //            var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
-            //            await configuredProject.Services.PackageReferences.RemoveAsync(packageIdentity.Id);
-            return System.Threading.Tasks.Task.FromResult(true);
-        }
+            try
+            {
+                await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                _packageReferences.Remove(packageIdentity.Id);
+            }
+            catch (Exception e)
+            {
+                nuGetProjectContext.Log(MessageLevel.Warning, e.Message, packageIdentity, _projectName);
+                return false;
+            }
 
+            return true;
+        }
 #endregion
     }
 }
-#endif

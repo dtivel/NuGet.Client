@@ -35,6 +35,9 @@
         <Reference Include="Microsoft.VisualStudio.VCProjectEngine, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
           <EmbedInteropTypes>True</EmbedInteropTypes>
         </Reference>
+        <Reference Include="Microsoft.VisualStudio.ProjectSystem">
+          <HintPath>$(EnlistmentRoot)\packages\Microsoft.VisualStudio.ProjectSystem.15.0.183-pre\lib\net451\Microsoft.VisualStudio.ProjectSystem.dll</HintPath>
+        </Reference>
         <Reference Include="Microsoft.VisualStudio.ProjectSystem.Interop">
           <HintPath>$(EnlistmentRoot)\packages\Microsoft.VisualStudio.ProjectSystem.15.0.183-pre\lib\net451\Microsoft.VisualStudio.ProjectSystem.Interop.dll</HintPath>
           <EmbedInteropTypes>True</EmbedInteropTypes>
@@ -45,7 +48,7 @@
           <EmbedInteropTypes>True</EmbedInteropTypes>
         </Reference>
         <Reference Include="VSLangProj150">
-          <HintPath>..\..\..\lib\VSLangProj150.dll</HintPath>
+          <HintPath>$(EnlistmentRoot)\lib\VSLangProj150.dll</HintPath>
           <EmbedInteropTypes>True</EmbedInteropTypes>
         </Reference>
       </ItemGroup>
@@ -94,13 +97,15 @@
     </Reference>
     <Reference Include="WindowsBase" />
   </ItemGroup>
+  <ItemGroup Condition="'$(VisualStudioVersion)' == '15.0'">
+    <Compile Include="ProjectSystems\LegacyCSProjPackageReferenceProject.cs" />
+    <Compile Include="ProjectSystems\LegacyCSProjPackageReferenceProjectProvider.cs" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="BindingRedirectBehavior.cs" />
     <Compile Include="CommonResources.cs" />
     <Compile Include="IDE\IVsSolutionManager.cs" />
     <Compile Include="ProjectSystems\CpsPackageReferenceProject.cs" />
-    <Compile Include="ProjectSystems\LegacyCSProjPackageReferenceProject.cs" />
-    <Compile Include="ProjectSystems\LegacyCSProjPackageReferenceProjectProvider.cs" />
     <Compile Include="ProjectSystems\IProjectSystemProvider.cs" />
     <Compile Include="ProjectSystems\MSBuildNuGetProjectProvider.cs" />
     <Compile Include="ProjectSystems\ProjectKNuGetProjectProvider.cs" />

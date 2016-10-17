@@ -3,11 +3,13 @@
 
 using System;
 using System.ComponentModel.Composition;
+using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Utilities;
 using NuGet.ProjectManagement;
 using NuGet.ProjectModel;
 using VSLangProj150;
+using ProjectSystem = Microsoft.VisualStudio.ProjectSystem;
 
 namespace NuGet.PackageManagement.VisualStudio
 {
@@ -70,6 +72,8 @@ namespace NuGet.PackageManagement.VisualStudio
                 return false;
             }
 
+            var unconfiguredProject = GetUnconfiguredProject(dteProject);
+
             var projectNames = ProjectNames.FromDTEProject(dteProject);
             var fullProjectPath = EnvDTEProjectUtility.GetFullProjectPath(dteProject);
 
@@ -92,6 +96,17 @@ namespace NuGet.PackageManagement.VisualStudio
                 packageSpecFactory);
 
             return true;
+        }
+
+        private ProjectSystem.UnconfiguredProject GetUnconfiguredProject(EnvDTE.Project project)
+        {
+            IVsBrowseObjectContext context = project as IVsBrowseObjectContext;
+            if (context == null && project != null)
+            { // VC implements this on their DTE.Project.Object
+                context = project.Object as IVsBrowseObjectContext;
+            }
+
+            return context != null ? context.UnconfiguredProject : null;
         }
     }
 }
