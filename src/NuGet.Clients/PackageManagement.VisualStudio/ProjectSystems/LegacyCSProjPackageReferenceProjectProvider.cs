@@ -7,7 +7,6 @@ using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Utilities;
 using NuGet.ProjectManagement;
-using NuGet.ProjectModel;
 using VSLangProj150;
 using ProjectSystem = Microsoft.VisualStudio.ProjectSystem;
 
@@ -72,28 +71,7 @@ namespace NuGet.PackageManagement.VisualStudio
                 return false;
             }
 
-            var unconfiguredProject = GetUnconfiguredProject(dteProject);
-
-            var projectNames = ProjectNames.FromDTEProject(dteProject);
-            var fullProjectPath = EnvDTEProjectUtility.GetFullProjectPath(dteProject);
-
-            Func<PackageSpec> packageSpecFactory = () =>
-            {
-                PackageSpec packageSpec;
-                if (_projectSystemCache.TryGetProjectRestoreInfo(fullProjectPath, out packageSpec))
-                {
-                    return packageSpec;
-                }
-
-                return null;
-            };
-
-            result = new LegacyCSProjPackageReferenceProject(
-                dteProject.Name,
-                dteProject.UniqueName,
-                fullProjectPath,
-                packageReferences,
-                packageSpecFactory);
+            result = new LegacyCSProjPackageReferenceProject(dteProject, packageReferences);
 
             return true;
         }

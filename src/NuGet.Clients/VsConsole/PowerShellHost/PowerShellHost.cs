@@ -375,13 +375,10 @@ namespace NuGetConsole.Host.PowerShell.Implementation
                     {
                         continue;
                     }
-
-                    var buildIntegratedProject = project as BuildIntegratedNuGetProject;
-
-                    if (buildIntegratedProject != null)
+                    else if (project is INuGetIntegratedProject)
                     {
                         var packages = BuildIntegratedProjectUtility
-                            .GetOrderedProjectPackageDependencies(buildIntegratedProject);
+                            .GetOrderedProjectPackageDependencies(project as INuGetIntegratedProject);
 
                         sortedGlobalPackages.AddRange(packages);
                     }

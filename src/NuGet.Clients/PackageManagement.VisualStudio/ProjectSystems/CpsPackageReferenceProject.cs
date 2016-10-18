@@ -23,7 +23,7 @@ namespace NuGet.PackageManagement.VisualStudio
     /// Key feature/difference is the project restore info is pushed by nomination API and stored in 
     /// a cache. Factory method retrieving the info from the cache should be provided.
     /// </summary>
-    public class CpsPackageReferenceProject : NuGetProject, INuGetIntegratedProject, IDependencyGraphProject
+    public class CpsPackageReferenceProject : CpsPackageReferenceProjectBase, IDependencyGraphProject
     {
         private readonly string _projectName;
         private readonly string _projectUniqueName;

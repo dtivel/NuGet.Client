@@ -23,7 +23,7 @@ namespace NuGet.ProjectManagement
         /// Project must be restored.
         /// </summary>
         public static IReadOnlyList<PackageIdentity> GetOrderedProjectPackageDependencies(
-            BuildIntegratedNuGetProject buildIntegratedProject)
+            INuGetIntegratedProject buildIntegratedProject)
         {
             var lockFile = GetLockFileOrNull(buildIntegratedProject);
 
@@ -40,7 +40,7 @@ namespace NuGet.ProjectManagement
         /// Project must be restored.
         /// </summary>
         public static IReadOnlyList<LibraryIdentity> GetOrderedProjectDependencies(
-            BuildIntegratedNuGetProject buildIntegratedProject)
+            INuGetIntegratedProject buildIntegratedProject)
         {
             var lockFile = GetLockFileOrNull(buildIntegratedProject);
 
@@ -55,9 +55,25 @@ namespace NuGet.ProjectManagement
         /// <summary>
         /// Read lock file
         /// </summary>
-        public static LockFile GetLockFileOrNull(BuildIntegratedNuGetProject buildIntegratedProject)
+        public static LockFile GetLockFileOrNull(INuGetIntegratedProject buildIntegratedProject)
         {
-            var lockFilePath = ProjectJsonPathUtilities.GetLockFilePath(buildIntegratedProject.JsonConfigPath);
+            string lockFilePath = string.Empty;
+            if (buildIntegratedProject is CpsPackageReferenceProjectBase)
+            {
+                var project = buildIntegratedProject as CpsPackageReferenceProjectBase;
+                lockFilePath = project.PathToAssetsFile ?? null;
+                if (string.IsNullOrEmpty(lockFilePath))
+                {
+                    return null;
+                }
+            }
+
+            if (buildIntegratedProject is BuildIntegratedNuGetProject)
+            {
+                var project = buildIntegratedProject as BuildIntegratedNuGetProject;
+                lockFilePath = ProjectJsonPathUtilities.GetLockFilePath(project.JsonConfigPath);
+            }
+
             return GetLockFileOrNull(lockFilePath);
         }
 

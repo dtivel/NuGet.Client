@@ -48,7 +48,7 @@ namespace NuGet.PackageManagement
         }
 
         public static async Task ExecuteInitPs1ScriptsAsync(
-            BuildIntegratedNuGetProject project,
+            INuGetIntegratedProject project,
             IEnumerable<PackageIdentity> packages,
             FallbackPackagePathResolver pathResolver,
             INuGetProjectContext projectContext)
