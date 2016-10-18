@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
 using NuGet.LibraryModel;
 using NuGet.Packaging;
@@ -15,7 +18,6 @@ using NuGet.Versioning;
 using VSLangProj;
 using VSLangProj150;
 
-
 namespace NuGet.PackageManagement.VisualStudio
 {
 /// <summary>
@@ -26,13 +28,14 @@ namespace NuGet.PackageManagement.VisualStudio
     {
         private readonly EnvDTE.Project _dteProject;
         private readonly string _projectFullPath;
+        private readonly string _baseIntermediatePath;
         private readonly PackageReferences _packageReferences;
 
         public LegacyCSProjPackageReferenceProject(
             EnvDTE.Project dteProject,
             PackageReferences packageReferences)
         {
-            if (_dteProject == null)
+            if (dteProject == null)
             {
                 throw new ArgumentNullException(nameof(dteProject));
             }
@@ -41,8 +44,15 @@ namespace NuGet.PackageManagement.VisualStudio
             _dteProject = dteProject;
             _packageReferences = packageReferences;
 
-            var _baseIntermediatePath = _dteProject.Properties.Item("IntermediatePath").Value as string;
-            PathToAssetsFile = _baseIntermediatePath;
+            var hierarchy = VsHierarchyUtility.ToVsHierarchy(dteProject);
+            var buildPropertyStorage = hierarchy as IVsBuildPropertyStorage;
+            var relativeBaseIntermediatePath = GetMSBuildProperty(buildPropertyStorage, "BaseIntermediateOutputPath");
+            if (!string.IsNullOrEmpty(relativeBaseIntermediatePath))
+            {
+                _baseIntermediatePath = Path.Combine(_projectFullPath, relativeBaseIntermediatePath);
+            }
+
+            PathToAssetsFile = _baseIntermediatePath;  //TODO revise this in light of new build-integrated model
 
             InternalMetadata.Add(NuGetProjectMetadataKeys.Name, _dteProject.Name);
             InternalMetadata.Add(NuGetProjectMetadataKeys.UniqueName, _dteProject.UniqueName);
@@ -130,6 +140,7 @@ namespace NuGet.PackageManagement.VisualStudio
             {
                 RestoreMetadata = new ProjectRestoreMetadata
                 {
+                    OutputPath = _baseIntermediatePath,
                     OutputType = RestoreOutputType.NETCore,
                     OriginalTargetFrameworks = tfis
                         .Select(tfi => tfi.FrameworkName.GetShortFolderName())
@@ -189,6 +200,7 @@ namespace NuGet.PackageManagement.VisualStudio
         {
             return GetInstalledPackagesAsync(CancellationToken.None);
         }
+
         #endregion
 
         #region NuGetProject
@@ -236,6 +248,27 @@ namespace NuGet.PackageManagement.VisualStudio
 
             return true;
         }
+
         #endregion
+
+        private static string GetMSBuildProperty(IVsBuildPropertyStorage buildPropertyStorage, string name)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            string output;
+            var result = buildPropertyStorage.GetPropertyValue(
+                name,
+                string.Empty,
+                (uint)_PersistStorageType.PST_PROJECT_FILE,
+                out output);
+
+            if (result != NuGetVSConstants.S_OK || string.IsNullOrWhiteSpace(output))
+            {
+                return null;
+            }
+
+            return output;
+        }
+
     }
 }
