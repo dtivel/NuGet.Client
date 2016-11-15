@@ -46,23 +46,26 @@ namespace NuGet.Commands.FuncTest
 
                 AddDependency(spec, "ENTITYFRAMEWORK", "6.1.3-BETA1");
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, new[] { sourceRepository }, packagesDir, Enumerable.Empty<string>(), logger);
-                var command = new RestoreCommand(request);
-                // Act
-                var result = await command.ExecuteAsync();
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, new[] { sourceRepository }, packagesDir, Enumerable.Empty<string>(), cacheContext, logger);
+                    var command = new RestoreCommand(request);
+                    // Act
+                    var result = await command.ExecuteAsync();
 
-                // Assert
-                Assert.True(result.Success, "The restore should have succeeded.");
+                    // Assert
+                    Assert.True(result.Success, "The restore should have succeeded.");
 
-                var library = result.LockFile.Libraries
-                    .FirstOrDefault(x => StringComparer.OrdinalIgnoreCase.Equals(x.Name, "EntityFramework"));
-                Assert.Equal("EntityFramework", library.Name);
-                Assert.Equal("6.1.3-beta1", library.Version.ToNormalizedString());
+                    var library = result.LockFile.Libraries
+                        .FirstOrDefault(x => StringComparer.OrdinalIgnoreCase.Equals(x.Name, "EntityFramework"));
+                    Assert.Equal("EntityFramework", library.Name);
+                    Assert.Equal("6.1.3-beta1", library.Version.ToNormalizedString());
 
-                var targetLibrary = result.LockFile.Targets.First().Libraries
-                    .FirstOrDefault(x => StringComparer.OrdinalIgnoreCase.Equals(x.Name, "EntityFramework"));
-                Assert.Equal("EntityFramework", targetLibrary.Name);
-                Assert.Equal("6.1.3-beta1", targetLibrary.Version.ToNormalizedString());
+                    var targetLibrary = result.LockFile.Targets.First().Libraries
+                        .FirstOrDefault(x => StringComparer.OrdinalIgnoreCase.Equals(x.Name, "EntityFramework"));
+                    Assert.Equal("EntityFramework", targetLibrary.Name);
+                    Assert.Equal("6.1.3-beta1", targetLibrary.Version.ToNormalizedString());
+                }
             }
         }
 
@@ -157,20 +160,23 @@ namespace NuGet.Commands.FuncTest
                 PackageSpecWriter.WriteToFile(referenceSpec, referenceSpecPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(projectSpec, sources, packagesDir, logger);
-                var command = new RestoreCommand(request);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(projectSpec, sources, packagesDir, cacheContext, logger);
+                    var command = new RestoreCommand(request);
 
-                // Act
-                var result = await command.ExecuteAsync();
+                    // Act
+                    var result = await command.ExecuteAsync();
 
-                // Assert
-                Assert.False(result.Success, "The restore should not have succeeded.");
-                var libraryRange = result
-                    .RestoreGraphs
-                    .First()
-                    .Unresolved
-                    .FirstOrDefault(g => g.Name == "REFERENCEDPROJECT");
-                Assert.NotNull(libraryRange);
+                    // Assert
+                    Assert.False(result.Success, "The restore should not have succeeded.");
+                    var libraryRange = result
+                        .RestoreGraphs
+                        .First()
+                        .Unresolved
+                        .FirstOrDefault(g => g.Name == "REFERENCEDPROJECT");
+                    Assert.NotNull(libraryRange);
+                }
             }
         }
 
@@ -275,28 +281,31 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "TestPackage.MinClientVersion", "1.0.0");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
-
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
-
-                var lockFileFormat = new LockFileFormat();
-                Exception ex = null;
-
-                // Act
-                var command = new RestoreCommand(request);
-
-                try
+                using (var cacheContext = new SourceCacheContext())
                 {
-                    await command.ExecuteAsync();
-                }
-                catch (Exception thrownEx)
-                {
-                    ex = thrownEx;
-                }
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                // Assert
-                Assert.Contains("'TestPackage.MinClientVersion 1.0.0' package requires NuGet client version '9.9999.0' or above", ex.Message);
-                Assert.False(File.Exists(request.LockFilePath));
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+
+                    var lockFileFormat = new LockFileFormat();
+                    Exception ex = null;
+
+                    // Act
+                    var command = new RestoreCommand(request);
+
+                    try
+                    {
+                        await command.ExecuteAsync();
+                    }
+                    catch (Exception thrownEx)
+                    {
+                        ex = thrownEx;
+                    }
+
+                    // Assert
+                    Assert.Contains("'TestPackage.MinClientVersion 1.0.0' package requires NuGet client version '9.9999.0' or above", ex.Message);
+                    Assert.False(File.Exists(request.LockFilePath));
+                }
             }
         }
 
@@ -317,29 +326,32 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "TestPackage.MinClientVersion", "1.0.0");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
-
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
-
-                var lockFileFormat = new LockFileFormat();
-
-                Exception ex = null;
-
-                // Act
-                var command = new RestoreCommand(request);
-
-                try
+                using (var cacheContext = new SourceCacheContext())
                 {
-                    await command.ExecuteAsync();
-                }
-                catch (Exception thrownEx)
-                {
-                    ex = thrownEx;
-                }
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                // Assert
-                Assert.Contains("'TestPackage.MinClientVersion 1.0.0' package requires NuGet client version '9.9999.0' or above", ex.Message);
-                Assert.False(File.Exists(request.LockFilePath));
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+
+                    var lockFileFormat = new LockFileFormat();
+
+                    Exception ex = null;
+
+                    // Act
+                    var command = new RestoreCommand(request);
+
+                    try
+                    {
+                        await command.ExecuteAsync();
+                    }
+                    catch (Exception thrownEx)
+                    {
+                        ex = thrownEx;
+                    }
+
+                    // Assert
+                    Assert.Contains("'TestPackage.MinClientVersion 1.0.0' package requires NuGet client version '9.9999.0' or above", ex.Message);
+                    Assert.False(File.Exists(request.LockFilePath));
+                }
             }
         }
 
@@ -493,30 +505,33 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
-                var framework = new FallbackFramework(NuGetFramework.Parse("dotnet"), new List<NuGetFramework> { NuGetFramework.Parse("portable-net452+win81") });
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
+                    var framework = new FallbackFramework(NuGetFramework.Parse("dotnet"), new List<NuGetFramework> { NuGetFramework.Parse("portable-net452+win81") });
 
-                // Act
+                    // Act
 
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
-                var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, framework, null);
-                var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
+                    var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, framework, null);
+                    var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
 
-                // Assert
-                Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(0, logger.Warnings);
-                Assert.Equal(1, result.GetAllInstalled().Count);
-                Assert.Equal("Newtonsoft.Json", result.GetAllInstalled().Single().Name);
-                Assert.Equal("7.0.1", result.GetAllInstalled().Single().Version.ToNormalizedString());
-                Assert.Equal(1, runtimeAssemblies.Count);
-                Assert.Equal("lib/portable-net45+wp80+win8+wpa81+dnxcore50/Newtonsoft.Json.dll", runtimeAssembly.Path);
+                    // Assert
+                    Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
+                    Assert.Equal(0, logger.Errors);
+                    Assert.Equal(0, logger.Warnings);
+                    Assert.Equal(1, result.GetAllInstalled().Count);
+                    Assert.Equal("Newtonsoft.Json", result.GetAllInstalled().Single().Name);
+                    Assert.Equal("7.0.1", result.GetAllInstalled().Single().Version.ToNormalizedString());
+                    Assert.Equal(1, runtimeAssemblies.Count);
+                    Assert.Equal("lib/portable-net45+wp80+win8+wpa81+dnxcore50/Newtonsoft.Json.dll", runtimeAssembly.Path);
+                }
             }
         }
 
@@ -547,32 +562,33 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
-                var framework = new FallbackFramework(NuGetFramework.Parse("netstandard1.2"), new List<NuGetFramework> { NuGetFramework.Parse("dotnet5.3"),
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
+                    var framework = new FallbackFramework(NuGetFramework.Parse("netstandard1.2"), new List<NuGetFramework> { NuGetFramework.Parse("dotnet5.3"),
                                                                                                                          NuGetFramework.Parse("portable-net452+win81")});
 
-                // Act
+                    // Act
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
+                    var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, framework, null);
+                    var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
 
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
-                var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, framework, null);
-                var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
-
-                // Assert
-                Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(0, logger.Warnings);
-                Assert.Equal(1, result.GetAllInstalled().Count);
-                Assert.Equal("Newtonsoft.Json", result.GetAllInstalled().Single().Name);
-                Assert.Equal("7.0.1", result.GetAllInstalled().Single().Version.ToNormalizedString());
-                Assert.Equal(1, runtimeAssemblies.Count);
-                Assert.Equal("lib/portable-net45+wp80+win8+wpa81+dnxcore50/Newtonsoft.Json.dll", runtimeAssembly.Path);
-
+                    // Assert
+                    Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
+                    Assert.Equal(0, logger.Errors);
+                    Assert.Equal(0, logger.Warnings);
+                    Assert.Equal(1, result.GetAllInstalled().Count);
+                    Assert.Equal("Newtonsoft.Json", result.GetAllInstalled().Single().Name);
+                    Assert.Equal("7.0.1", result.GetAllInstalled().Single().Version.ToNormalizedString());
+                    Assert.Equal(1, runtimeAssemblies.Count);
+                    Assert.Equal("lib/portable-net45+wp80+win8+wpa81+dnxcore50/Newtonsoft.Json.dll", runtimeAssembly.Path);
+                }
             }
         }
 
@@ -603,31 +619,37 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
-                var framework = new FallbackFramework(NuGetFramework.Parse("dotnet"), new List<NuGetFramework> { NuGetFramework.Parse("portable-net452+win81") });
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
-                logger.Clear();
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
+                    var framework = new FallbackFramework(NuGetFramework.Parse("dotnet"), new List<NuGetFramework> { NuGetFramework.Parse("portable-net452+win81") });
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
+                    logger.Clear();
 
-                // Act
-                request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                    // Act
+                    using (var cacheContext2 = new SourceCacheContext())
+                    {
+                        request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext2, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
-                request.ExistingLockFile = result.LockFile;
-                command = new RestoreCommand(request);
-                result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
+                        request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                        request.ExistingLockFile = result.LockFile;
+                        command = new RestoreCommand(request);
+                        result = await command.ExecuteAsync();
+                        await result.CommitAsync(logger, CancellationToken.None);
 
-                // Assert
-                Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(0, logger.Warnings);
-                Assert.Equal(0, result.GetAllInstalled().Count);
+                        // Assert
+                        Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
+                        Assert.Equal(0, logger.Errors);
+                        Assert.Equal(0, logger.Warnings);
+                        Assert.Equal(0, result.GetAllInstalled().Count);
+                    }
+                }
             }
         }
 
@@ -676,17 +698,20 @@ namespace NuGet.Commands.FuncTest
                 Assert.True(fileSize == 0, "Dummy nupkg file bigger than expected");
 
                 // create the request
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                var command = new RestoreCommand(request);
+                    var command = new RestoreCommand(request);
 
-                // Act
-                var result = await command.ExecuteAsync();
+                    // Act
+                    var result = await command.ExecuteAsync();
 
-                // Assert
-                var newFileSize = new FileInfo(nupkgPath).Length;
+                    // Assert
+                    var newFileSize = new FileInfo(nupkgPath).Length;
 
-                Assert.True(newFileSize > 0, "Downloaded file not overriding the dummy nupkg");
+                    Assert.True(newFileSize > 0, "Downloaded file not overriding the dummy nupkg");
+                }
             }
         }
 
@@ -717,26 +742,29 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
-                var framework = new FallbackFramework(NuGetFramework.Parse("dotnet"), new List<NuGetFramework> { NuGetFramework.Parse("portable-net452+win81") });
-                var warning = "Package 'Newtonsoft.Json 7.0.1' was restored using '.NETPortable,Version=v0.0,Profile=net452+win81' instead the project target framework '.NETPlatform,Version=v5.0'. This may cause compatibility problems.";
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
+                    var framework = new FallbackFramework(NuGetFramework.Parse("dotnet"), new List<NuGetFramework> { NuGetFramework.Parse("portable-net452+win81") });
+                    var warning = "Package 'Newtonsoft.Json 7.0.1' was restored using '.NETPortable,Version=v0.0,Profile=net452+win81' instead the project target framework '.NETPlatform,Version=v5.0'. This may cause compatibility problems.";
 
-                // Act
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
-                var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, framework, null);
-                var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
+                    // Act
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
+                    var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, framework, null);
+                    var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
 
-                // Assert
-                Assert.Equal(1, result.GetAllInstalled().Count);
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(1, logger.Warnings);
-                Assert.Equal(1, logger.Messages.Where(message => message.Equals(warning)).Count());
+                    // Assert
+                    Assert.Equal(1, result.GetAllInstalled().Count);
+                    Assert.Equal(0, logger.Errors);
+                    Assert.Equal(1, logger.Warnings);
+                    Assert.Equal(1, logger.Messages.Where(message => message.Equals(warning)).Count());
+                }
             }
         }
 
@@ -767,28 +795,31 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
-                var framework = new FallbackFramework(NuGetFramework.Parse("dotnet"), new List<NuGetFramework> { NuGetFramework.Parse("portable-net452+win81") });
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
+                    var framework = new FallbackFramework(NuGetFramework.Parse("dotnet"), new List<NuGetFramework> { NuGetFramework.Parse("portable-net452+win81") });
 
-                // Act
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
-                var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, framework, null);
-                var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
-                var dependencies = string.Join("|", result.GetAllInstalled().Select(dependency => dependency.Name)
-                    .OrderBy(name => name, StringComparer.OrdinalIgnoreCase));
+                    // Act
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
+                    var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, framework, null);
+                    var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
+                    var dependencies = string.Join("|", result.GetAllInstalled().Select(dependency => dependency.Name)
+                        .OrderBy(name => name, StringComparer.OrdinalIgnoreCase));
 
-                // Assert
-                Assert.Equal(4, result.GetAllInstalled().Count);
-                Assert.Equal("Microsoft.Data.Edm|Microsoft.Data.OData|System.Spatial|WindowsAzure.Storage", dependencies);
-                Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(0, logger.Warnings);
+                    // Assert
+                    Assert.Equal(4, result.GetAllInstalled().Count);
+                    Assert.Equal("Microsoft.Data.Edm|Microsoft.Data.OData|System.Spatial|WindowsAzure.Storage", dependencies);
+                    Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
+                    Assert.Equal(0, logger.Errors);
+                    Assert.Equal(0, logger.Warnings);
+                }
             }
         }
 
@@ -819,21 +850,24 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
-                var framework = new FallbackFramework(NuGetFramework.Parse("dotnet"), new List<NuGetFramework> { NuGetFramework.Parse("portable-net452+win81") });
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
+                    var framework = new FallbackFramework(NuGetFramework.Parse("dotnet"), new List<NuGetFramework> { NuGetFramework.Parse("portable-net452+win81") });
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
 
-                // Act
-                var valid = result.LockFile.IsValidForPackageSpec(spec);
+                    // Act
+                    var valid = result.LockFile.IsValidForPackageSpec(spec);
 
-                // Assert
-                Assert.True(valid);
+                    // Assert
+                    Assert.True(valid);
+                }
             }
         }
 
@@ -863,28 +897,31 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "json-ld.net", "1.0.4");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
 
-                // Act
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
-                var assemblies = GetRuntimeAssemblies(result.LockFile.Targets, "net46", null);
+                    // Act
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
+                    var assemblies = GetRuntimeAssemblies(result.LockFile.Targets, "net46", null);
 
-                // Build again to verify the noop works also
-                result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
-                var assemblies2 = GetRuntimeAssemblies(result.LockFile.Targets, "net46", null);
+                    // Build again to verify the noop works also
+                    result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
+                    var assemblies2 = GetRuntimeAssemblies(result.LockFile.Targets, "net46", null);
 
-                // Assert
-                Assert.Equal(2, assemblies.Count);
-                Assert.Equal("lib/net45/Newtonsoft.Json.dll", assemblies[1].Path);
-                Assert.Equal(2, assemblies2.Count);
-                Assert.Equal("lib/net45/Newtonsoft.Json.dll", assemblies2[1].Path);
+                    // Assert
+                    Assert.Equal(2, assemblies.Count);
+                    Assert.Equal("lib/net45/Newtonsoft.Json.dll", assemblies[1].Path);
+                    Assert.Equal(2, assemblies2.Count);
+                    Assert.Equal("lib/net45/Newtonsoft.Json.dll", assemblies2[1].Path);
+                }
             }
         }
 
@@ -914,21 +951,24 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "dotNetRDF", "1.0.8.3533");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
 
-                // Act
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
-                var assemblies = GetRuntimeAssemblies(result.LockFile.Targets, "net46", null);
+                    // Act
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
+                    var assemblies = GetRuntimeAssemblies(result.LockFile.Targets, "net46", null);
 
-                // Assert
-                Assert.Equal(4, assemblies.Count);
-                Assert.Equal("lib/40/Newtonsoft.Json.dll", assemblies[2].Path);
+                    // Assert
+                    Assert.Equal(4, assemblies.Count);
+                    Assert.Equal("lib/40/Newtonsoft.Json.dll", assemblies[2].Path);
+                }
             }
         }
 
@@ -948,39 +988,45 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "NuGet.Versioning", "1.0.7");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
 
-                var lockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    var lockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                // Change the lock file and write it out to disk
-                var modifiedLockFile = result.LockFile;
-                modifiedLockFile.Version = 1000;
+                    // Change the lock file and write it out to disk
+                    var modifiedLockFile = result.LockFile;
+                    modifiedLockFile.Version = 1000;
 
-                var lockFormat = new LockFileFormat();
-                lockFormat.Write(File.OpenWrite(lockFilePath), modifiedLockFile);
+                    var lockFormat = new LockFileFormat();
+                    lockFormat.Write(File.OpenWrite(lockFilePath), modifiedLockFile);
 
-                request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                    using (var cacheContext2 = new SourceCacheContext())
+                    {
+                        request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext2, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                        request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                // Act
-                request.ExistingLockFile = modifiedLockFile;
+                        // Act
+                        request.ExistingLockFile = modifiedLockFile;
 
-                command = new RestoreCommand(request);
-                result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
+                        command = new RestoreCommand(request);
+                        result = await command.ExecuteAsync();
+                        await result.CommitAsync(logger, CancellationToken.None);
 
-                var lockFileFromDisk = lockFormat.Read(lockFilePath);
+                        var lockFileFromDisk = lockFormat.Read(lockFilePath);
 
-                // Assert
-                // The file should be written out and the version should be updated
-                Assert.Equal(LockFileFormat.Version, lockFileFromDisk.Version);
+                        // Assert
+                        // The file should be written out and the version should be updated
+                        Assert.Equal(LockFileFormat.Version, lockFileFromDisk.Version);
+                    }
+                }
             }
         }
 
@@ -1000,37 +1046,43 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "NuGet.Versioning", "1.0.7");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
 
-                var lockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    var lockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                // Add white space to the end of the file
-                var whitespace = $"{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}";
-                File.AppendAllText(lockFilePath, whitespace);
+                    // Add white space to the end of the file
+                    var whitespace = $"{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}";
+                    File.AppendAllText(lockFilePath, whitespace);
 
-                // Act
-                request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                    using (var cacheContext2 = new SourceCacheContext())
+                    {
+                        // Act
+                        request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext2, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
-                var previousLockFile = result.LockFile;
-                request.ExistingLockFile = result.LockFile;
+                        request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                        var previousLockFile = result.LockFile;
+                        request.ExistingLockFile = result.LockFile;
 
-                command = new RestoreCommand(request);
-                result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, true, CancellationToken.None);
+                        command = new RestoreCommand(request);
+                        result = await command.ExecuteAsync();
+                        await result.CommitAsync(logger, true, CancellationToken.None);
 
-                var output = File.ReadAllText(lockFilePath);
+                        var output = File.ReadAllText(lockFilePath);
 
-                // Assert
-                // The file should committed and it should clear the whitespace
-                Assert.False(output.EndsWith(whitespace, StringComparison.OrdinalIgnoreCase));
+                        // Assert
+                        // The file should committed and it should clear the whitespace
+                        Assert.False(output.EndsWith(whitespace, StringComparison.OrdinalIgnoreCase));
+                    }
+                }
             }
         }
 
@@ -1050,50 +1102,56 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "NuGet.Versioning", "1.0.7");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
 
-                var lockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    var lockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                // Act
-                var lastDate = File.GetLastWriteTime(lockFilePath);
+                    // Act
+                    var lastDate = File.GetLastWriteTime(lockFilePath);
 
-                request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                    using (var cacheContext2 = new SourceCacheContext())
+                    {
+                        request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext2, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
-                var previousLockFile = result.LockFile;
-                request.ExistingLockFile = result.LockFile;
+                        request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                        var previousLockFile = result.LockFile;
+                        request.ExistingLockFile = result.LockFile;
 
-                // Act 2
-                // Read the file from disk to verify the reader
-                var fromDisk = lockFileFormat.Read(lockFilePath);
+                        // Act 2
+                        // Read the file from disk to verify the reader
+                        var fromDisk = lockFileFormat.Read(lockFilePath);
 
-                // wait half a second to make sure the time difference can be picked up
-                await Task.Delay(500);
+                        // wait half a second to make sure the time difference can be picked up
+                        await Task.Delay(500);
 
-                command = new RestoreCommand(request);
-                result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
+                        command = new RestoreCommand(request);
+                        result = await command.ExecuteAsync();
+                        await result.CommitAsync(logger, CancellationToken.None);
 
-                var currentDate = File.GetLastWriteTime(lockFilePath);
+                        var currentDate = File.GetLastWriteTime(lockFilePath);
 
-                // Assert
-                // The file should not be written out
-                Assert.Equal(lastDate, currentDate);
+                        // Assert
+                        // The file should not be written out
+                        Assert.Equal(lastDate, currentDate);
 
-                // Verify the files are equal
-                Assert.True(previousLockFile.Equals(result.LockFile));
-                Assert.True(fromDisk.Equals(result.LockFile));
+                        // Verify the files are equal
+                        Assert.True(previousLockFile.Equals(result.LockFile));
+                        Assert.True(fromDisk.Equals(result.LockFile));
 
-                // Verify the hash codes are the same
-                Assert.Equal(previousLockFile.GetHashCode(), result.LockFile.GetHashCode());
-                Assert.Equal(fromDisk.GetHashCode(), result.LockFile.GetHashCode());
+                        // Verify the hash codes are the same
+                        Assert.Equal(previousLockFile.GetHashCode(), result.LockFile.GetHashCode());
+                        Assert.Equal(fromDisk.GetHashCode(), result.LockFile.GetHashCode());
+                    }
+                }
             }
         }
 
@@ -1113,30 +1171,33 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "NuGet.Versioning", "1.0.7");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
+                    var lockFileFormat = new LockFileFormat();
 
-                // Act
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
-                var installed = result.GetAllInstalled();
-                var unresolved = result.GetAllUnresolved();
-                var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, "netcore50", null);
+                    // Act
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
+                    var installed = result.GetAllInstalled();
+                    var unresolved = result.GetAllUnresolved();
+                    var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, "netcore50", null);
 
-                var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
+                    var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
 
-                // Assert
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(1, installed.Count);
-                Assert.Equal(0, unresolved.Count);
-                Assert.Equal("NuGet.Versioning", installed.Single().Name);
-                Assert.Equal("1.0.7", installed.Single().Version.ToNormalizedString());
+                    // Assert
+                    Assert.Equal(0, logger.Errors);
+                    Assert.Equal(1, installed.Count);
+                    Assert.Equal(0, unresolved.Count);
+                    Assert.Equal("NuGet.Versioning", installed.Single().Name);
+                    Assert.Equal("1.0.7", installed.Single().Version.ToNormalizedString());
 
-                Assert.Equal(1, runtimeAssemblies.Count);
-                Assert.Equal("lib/portable-net40+win/NuGet.Versioning.dll", runtimeAssembly.Path);
+                    Assert.Equal(1, runtimeAssemblies.Count);
+                    Assert.Equal("lib/portable-net40+win/NuGet.Versioning.dll", runtimeAssembly.Path);
+                }
             }
         }
 
@@ -1156,29 +1217,32 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "WebGrease", "1.6.0");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
+                    var lockFileFormat = new LockFileFormat();
 
-                // Act
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
-                var installed = result.GetAllInstalled();
-                var unresolved = result.GetAllUnresolved();
-                var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, "netcore50", null);
-                var jsonNetReference = runtimeAssemblies.SingleOrDefault(assembly => assembly.Path == "lib/netcore45/Newtonsoft.Json.dll");
-                var jsonNetPackage = installed.SingleOrDefault(package => package.Name == "Newtonsoft.Json");
+                    // Act
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
+                    var installed = result.GetAllInstalled();
+                    var unresolved = result.GetAllUnresolved();
+                    var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, "netcore50", null);
+                    var jsonNetReference = runtimeAssemblies.SingleOrDefault(assembly => assembly.Path == "lib/netcore45/Newtonsoft.Json.dll");
+                    var jsonNetPackage = installed.SingleOrDefault(package => package.Name == "Newtonsoft.Json");
 
-                // Assert
-                // There will be compatibility errors, but we don't care
-                Assert.Equal(3, installed.Count);
-                Assert.Equal(0, unresolved.Count);
-                Assert.Equal("5.0.4", jsonNetPackage.Version.ToNormalizedString());
+                    // Assert
+                    // There will be compatibility errors, but we don't care
+                    Assert.Equal(3, installed.Count);
+                    Assert.Equal(0, unresolved.Count);
+                    Assert.Equal("5.0.4", jsonNetPackage.Version.ToNormalizedString());
 
-                Assert.Equal(1, runtimeAssemblies.Count);
-                Assert.NotNull(jsonNetReference);
+                    Assert.Equal(1, runtimeAssemblies.Count);
+                    Assert.NotNull(jsonNetReference);
+                }
             }
         }
 
@@ -1220,43 +1284,46 @@ namespace NuGet.Commands.FuncTest
                 var specPath1 = Path.Combine(project1.FullName, "project.json");
                 var spec1 = JsonPackageSpecReader.GetPackageSpec(project1Json, "project1", specPath1);
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec1, sources, packagesDir.FullName, logger);
-
-                request.LockFilePath = Path.Combine(project1.FullName, "project.lock.json");
-
-                var packages = new List<SimpleTestPackageContext>();
-                var dependencies = new List<SimpleTestPackageContext>();
-
-                for (int i = 0; i < 500; i++)
+                using (var cacheContext = new SourceCacheContext())
                 {
-                    var package = new SimpleTestPackageContext()
+                    var request = new TestRestoreRequest(spec1, sources, packagesDir.FullName, cacheContext, logger);
+
+                    request.LockFilePath = Path.Combine(project1.FullName, "project.lock.json");
+
+                    var packages = new List<SimpleTestPackageContext>();
+                    var dependencies = new List<SimpleTestPackageContext>();
+
+                    for (int i = 0; i < 500; i++)
                     {
-                        Id = $"package{i}"
+                        var package = new SimpleTestPackageContext()
+                        {
+                            Id = $"package{i}"
+                        };
+                        packages.Add(package);
+                        dependencies.Add(package);
+                    }
+
+                    var packageA = new SimpleTestPackageContext()
+                    {
+                        Id = "packageA",
+                        Dependencies = dependencies
                     };
-                    packages.Add(package);
-                    dependencies.Add(package);
+                    packages.Add(packageA);
+                    SimpleTestPackageUtility.CreatePackages(packages, packageSource.FullName);
+
+                    // Act
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
+                    var lockFile = result.LockFile;
+                    var installed = result.GetAllInstalled();
+                    var unresolved = result.GetAllUnresolved();
+                    await result.CommitAsync(logger, CancellationToken.None);
+
+                    // Assert
+                    Assert.True(result.Success);
+                    Assert.Equal(501, installed.Count);
+                    Assert.Equal(0, unresolved.Count);
                 }
-
-                var packageA = new SimpleTestPackageContext()
-                {
-                    Id = "packageA",
-                    Dependencies = dependencies
-                };
-                packages.Add(packageA);
-                SimpleTestPackageUtility.CreatePackages(packages, packageSource.FullName);
-
-                // Act
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
-                var lockFile = result.LockFile;
-                var installed = result.GetAllInstalled();
-                var unresolved = result.GetAllUnresolved();
-                await result.CommitAsync(logger, CancellationToken.None);
-
-                // Assert
-                Assert.True(result.Success);
-                Assert.Equal(501, installed.Count);
-                Assert.Equal(0, unresolved.Count);
             }
         }
 
@@ -1276,29 +1343,32 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "Moon.Owin.Localization", "1.3.1");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
+                    var lockFileFormat = new LockFileFormat();
 
-                // Act
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
-                var installed = result.GetAllInstalled();
-                var unresolved = result.GetAllUnresolved();
-                var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, "net46", null);
-                var jsonNetReference = runtimeAssemblies.SingleOrDefault(assembly => assembly.Path == "lib/net45/Newtonsoft.Json.dll");
-                var jsonNetPackage = installed.SingleOrDefault(package => package.Name == "Newtonsoft.Json");
+                    // Act
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
+                    var installed = result.GetAllInstalled();
+                    var unresolved = result.GetAllUnresolved();
+                    var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, "net46", null);
+                    var jsonNetReference = runtimeAssemblies.SingleOrDefault(assembly => assembly.Path == "lib/net45/Newtonsoft.Json.dll");
+                    var jsonNetPackage = installed.SingleOrDefault(package => package.Name == "Newtonsoft.Json");
 
-                // Assert
-                // There will be compatibility errors, but we don't care
-                Assert.Equal(25, installed.Count);
-                Assert.Equal(0, unresolved.Count);
-                Assert.Equal("7.0.1", jsonNetPackage.Version.ToNormalizedString());
+                    // Assert
+                    // There will be compatibility errors, but we don't care
+                    Assert.Equal(25, installed.Count);
+                    Assert.Equal(0, unresolved.Count);
+                    Assert.Equal("7.0.1", jsonNetPackage.Version.ToNormalizedString());
 
-                Assert.Equal(24, runtimeAssemblies.Count);
-                Assert.NotNull(jsonNetReference);
+                    Assert.Equal(24, runtimeAssemblies.Count);
+                    Assert.NotNull(jsonNetReference);
+                }
             }
         }
 
@@ -1318,24 +1388,30 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "NuGet.Versioning", "1.0.7");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var command = new RestoreCommand(request);
-                var firstRun = await command.ExecuteAsync();
+                    var command = new RestoreCommand(request);
+                    var firstRun = await command.ExecuteAsync();
 
-                // Act
-                request = new TestRestoreRequest(spec, sources, packagesDir, logger);
-                command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
-                var installed = result.GetAllInstalled();
-                var unresolved = result.GetAllUnresolved();
+                    // Act
+                    using (var cacheContext2 = new SourceCacheContext())
+                    {
+                        request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext2, logger);
+                        command = new RestoreCommand(request);
+                        var result = await command.ExecuteAsync();
+                        var installed = result.GetAllInstalled();
+                        var unresolved = result.GetAllUnresolved();
 
-                // Assert
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(0, installed.Count);
-                Assert.Equal(0, unresolved.Count);
+                        // Assert
+                        Assert.Equal(0, logger.Errors);
+                        Assert.Equal(0, installed.Count);
+                        Assert.Equal(0, unresolved.Count);
+                    }
+                }
             }
         }
 
@@ -1357,18 +1433,21 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "NuGet.Versioning", "1.0.7");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                // Act
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
+                    // Act
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
 
-                // Assert
-                var pathResolver = new VersionFolderPathResolver(packagesDir);
-                var nuspecPath = pathResolver.GetManifestFilePath("NuGet.Versioning", new NuGetVersion("1.0.7"));
-                Assert.True(File.Exists(nuspecPath));
+                    // Assert
+                    var pathResolver = new VersionFolderPathResolver(packagesDir);
+                    var nuspecPath = pathResolver.GetManifestFilePath("NuGet.Versioning", new NuGetVersion("1.0.7"));
+                    Assert.True(File.Exists(nuspecPath));
+                }
             }
         }
 
@@ -1390,18 +1469,21 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "owin", "1.0");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                // Act
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
+                    // Act
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
 
-                // Assert
-                var pathResolver = new VersionFolderPathResolver(packagesDir);
-                var nuspecPath = pathResolver.GetManifestFilePath("owin", new NuGetVersion("1.0.0"));
-                Assert.True(File.Exists(nuspecPath));
+                    // Assert
+                    var pathResolver = new VersionFolderPathResolver(packagesDir);
+                    var nuspecPath = pathResolver.GetManifestFilePath("owin", new NuGetVersion("1.0.0"));
+                    Assert.True(File.Exists(nuspecPath));
+                }
             }
         }
 
@@ -1421,22 +1503,25 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "Newtonsoft.Json", "7.0.0"); // 7.0.0 does not exist so we'll bump up to 7.0.1
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                // Act
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
-                var installed = result.GetAllInstalled();
-                var unresolved = result.GetAllUnresolved();
-                var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, "netcore50", null);
+                    // Act
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
+                    var installed = result.GetAllInstalled();
+                    var unresolved = result.GetAllUnresolved();
+                    var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, "netcore50", null);
 
-                var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
+                    var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
 
-                // Assert
-                Assert.Equal(3, logger.Warnings); // We'll get the warning for each runtime and for the runtime-less restore.
-                Assert.Contains("Dependency specified was Newtonsoft.Json (>= 7.0.0) but ended up with Newtonsoft.Json 7.0.1.", logger.Messages);
+                    // Assert
+                    Assert.Equal(3, logger.Warnings); // We'll get the warning for each runtime and for the runtime-less restore.
+                    Assert.Contains("Dependency specified was Newtonsoft.Json (>= 7.0.0) but ended up with Newtonsoft.Json 7.0.1.", logger.Messages);
+                }
             }
         }
 
@@ -1454,21 +1539,29 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(BasicConfig.ToString(), "TestProject", specPath);
 
                 AddDependency(spec, "Newtonsoft.Json", "7.0.0"); // 7.0.0 does not exist so we'll bump up to 7.0.1
-                
+
+                RestoreResult resultA;
+
                 // Execute the first restore
-                var requestA = new TestRestoreRequest(spec, sources, packagesDir, new TestLogger());
-                requestA.LockFilePath = Path.Combine(projectDir, "project.lock.json");
-                var commandA = new RestoreCommand(requestA);
-                var resultA = await commandA.ExecuteAsync();
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var requestA = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, new TestLogger());
+                    requestA.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    var commandA = new RestoreCommand(requestA);
+                    resultA = await commandA.ExecuteAsync();
+                }
 
                 var logger = new TestLogger();
-                var requestB = new TestRestoreRequest(spec, sources, packagesDir, logger);
-                requestB.LockFilePath = Path.Combine(projectDir, "project.lock.json");
-                requestB.ExistingLockFile = resultA.LockFile;
-                var commandB = new RestoreCommand(requestB);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var requestB = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
+                    requestB.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    requestB.ExistingLockFile = resultA.LockFile;
+                    var commandB = new RestoreCommand(requestB);
 
-                // Act
-                var resultB = await commandB.ExecuteAsync();
+                    // Act
+                    var resultB = await commandB.ExecuteAsync();
+                }
 
                 // Assert
                 Assert.Equal(3, logger.Warnings); // We'll get the warning for each runtime and for the runtime-less restore.
@@ -1492,30 +1585,33 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "Newtonsoft.Json", "7.0.1");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
+                    var lockFileFormat = new LockFileFormat();
 
-                // Act
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
-                var installed = result.GetAllInstalled();
-                var unresolved = result.GetAllUnresolved();
-                var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, "netcore50", null);
+                    // Act
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
+                    var installed = result.GetAllInstalled();
+                    var unresolved = result.GetAllUnresolved();
+                    var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, "netcore50", null);
 
-                var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
+                    var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
 
-                // Assert
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(1, installed.Count);
-                Assert.Equal(0, unresolved.Count);
-                Assert.Equal("Newtonsoft.Json", installed.Single().Name);
-                Assert.Equal("7.0.1", installed.Single().Version.ToNormalizedString());
+                    // Assert
+                    Assert.Equal(0, logger.Errors);
+                    Assert.Equal(1, installed.Count);
+                    Assert.Equal(0, unresolved.Count);
+                    Assert.Equal("Newtonsoft.Json", installed.Single().Name);
+                    Assert.Equal("7.0.1", installed.Single().Version.ToNormalizedString());
 
-                Assert.Equal(1, runtimeAssemblies.Count);
-                Assert.Equal("lib/portable-net45+wp80+win8+wpa81+dnxcore50/Newtonsoft.Json.dll", runtimeAssembly.Path);
+                    Assert.Equal(1, runtimeAssemblies.Count);
+                    Assert.Equal("lib/portable-net45+wp80+win8+wpa81+dnxcore50/Newtonsoft.Json.dll", runtimeAssembly.Path);
+                }
             }
         }
 
@@ -1535,35 +1631,38 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "NuGet.Core", "2.8.3");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
+                    var lockFileFormat = new LockFileFormat();
 
-                // Act
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
-                var installed = result.GetAllInstalled();
-                var unresolved = result.GetAllUnresolved();
-                var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, "netcore50", null);
+                    // Act
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
+                    var installed = result.GetAllInstalled();
+                    var unresolved = result.GetAllUnresolved();
+                    var runtimeAssemblies = GetRuntimeAssemblies(result.LockFile.Targets, "netcore50", null);
 
-                var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
+                    var runtimeAssembly = runtimeAssemblies.FirstOrDefault();
 
-                // Assert
-                var expectedIssue = CompatibilityIssue.IncompatiblePackage(
-                    new PackageIdentity("NuGet.Core", new NuGetVersion(2, 8, 3)),
-                    FrameworkConstants.CommonFrameworks.NetCore50,
-                    null,
-                    new[] { NuGetFramework.Parse("net40-client") });
-                Assert.Contains(expectedIssue, result.CompatibilityCheckResults.SelectMany(c => c.Issues).ToArray());
-                Assert.False(result.CompatibilityCheckResults.Any(c => c.Success));
-                Assert.Contains(expectedIssue.Format(), logger.Messages);
+                    // Assert
+                    var expectedIssue = CompatibilityIssue.IncompatiblePackage(
+                        new PackageIdentity("NuGet.Core", new NuGetVersion(2, 8, 3)),
+                        FrameworkConstants.CommonFrameworks.NetCore50,
+                        null,
+                        new[] { NuGetFramework.Parse("net40-client") });
+                    Assert.Contains(expectedIssue, result.CompatibilityCheckResults.SelectMany(c => c.Issues).ToArray());
+                    Assert.False(result.CompatibilityCheckResults.Any(c => c.Success));
+                    Assert.Contains(expectedIssue.Format(), logger.Messages);
 
-                Assert.Equal(9, logger.Errors);
-                Assert.Equal(2, installed.Count);
-                Assert.Equal(0, unresolved.Count);
-                Assert.Equal(0, runtimeAssemblies.Count);
+                    Assert.Equal(9, logger.Errors);
+                    Assert.Equal(2, installed.Count);
+                    Assert.Equal(0, unresolved.Count);
+                    Assert.Equal(0, runtimeAssemblies.Count);
+                }
             }
         }
 
@@ -1583,26 +1682,29 @@ namespace NuGet.Commands.FuncTest
                 AddDependency(spec, "NotARealPackage.ThisShouldNotExists.DontCreateIt.Seriously.JustDontDoIt.Please", "2.8.3");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
+                    var lockFileFormat = new LockFileFormat();
 
-                // Act
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
-                var installed = result.GetAllInstalled();
-                var unresolved = result.GetAllUnresolved();
+                    // Act
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
+                    var installed = result.GetAllInstalled();
+                    var unresolved = result.GetAllUnresolved();
 
-                // Assert
-                Assert.False(result.Success);
+                    // Assert
+                    Assert.False(result.Success);
 
-                Assert.Equal(1, logger.Errors);
-                Assert.Empty(result.CompatibilityCheckResults);
-                Assert.DoesNotContain("compatible with", logger.Messages);
-                Assert.Equal(1, unresolved.Count);
-                Assert.Equal(0, installed.Count);
+                    Assert.Equal(1, logger.Errors);
+                    Assert.Empty(result.CompatibilityCheckResults);
+                    Assert.DoesNotContain("compatible with", logger.Messages);
+                    Assert.Equal(1, unresolved.Count);
+                    Assert.Equal(0, installed.Count);
+                }
             }
         }
 
@@ -1631,24 +1733,27 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(project, "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
+                    var lockFileFormat = new LockFileFormat();
 
-                // Act
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
-                var installed = result.GetAllInstalled();
-                var unresolved = result.GetAllUnresolved();
+                    // Act
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
+                    var installed = result.GetAllInstalled();
+                    var unresolved = result.GetAllUnresolved();
 
-                // Assert
-                Assert.Equal(2, result.LockFile.ProjectFileDependencyGroups.Count);
-                Assert.True(string.IsNullOrEmpty(result.LockFile.ProjectFileDependencyGroups[0].FrameworkName));
-                Assert.Equal(new[] { "Newtonsoft.Json >= 6.0.4" }, result.LockFile.ProjectFileDependencyGroups[0].Dependencies.ToArray());
-                Assert.Equal(".NETFramework,Version=v4.5", result.LockFile.ProjectFileDependencyGroups[1].FrameworkName);
-                Assert.Empty(result.LockFile.ProjectFileDependencyGroups[1].Dependencies);
+                    // Assert
+                    Assert.Equal(2, result.LockFile.ProjectFileDependencyGroups.Count);
+                    Assert.True(string.IsNullOrEmpty(result.LockFile.ProjectFileDependencyGroups[0].FrameworkName));
+                    Assert.Equal(new[] { "Newtonsoft.Json >= 6.0.4" }, result.LockFile.ProjectFileDependencyGroups[0].Dependencies.ToArray());
+                    Assert.Equal(".NETFramework,Version=v4.5", result.LockFile.ProjectFileDependencyGroups[1].FrameworkName);
+                    Assert.Empty(result.LockFile.ProjectFileDependencyGroups[1].Dependencies);
+                }
             }
         }
 
@@ -1678,18 +1783,21 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(project, "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
+                    var lockFileFormat = new LockFileFormat();
 
-                // Act
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
+                    // Act
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
 
-                // Assert
-                Assert.True(result.Success);
+                    // Assert
+                    Assert.True(result.Success);
+                }
             }
         }
 
@@ -1723,24 +1831,27 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(project, "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
+                    var lockFileFormat = new LockFileFormat();
 
-                // Act
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
-                var installed = result.GetAllInstalled();
-                var unresolved = result.GetAllUnresolved();
-                var brokenPackages = result.CompatibilityCheckResults.FirstOrDefault(c =>
-                    c.Graph.Framework == FrameworkConstants.CommonFrameworks.DnxCore50 &&
-                    !string.IsNullOrEmpty(c.Graph.RuntimeIdentifier)).Issues.Where(c => c.Type == CompatibilityIssueType.ReferenceAssemblyNotImplemented).ToArray();
+                    // Act
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
+                    var installed = result.GetAllInstalled();
+                    var unresolved = result.GetAllUnresolved();
+                    var brokenPackages = result.CompatibilityCheckResults.FirstOrDefault(c =>
+                        c.Graph.Framework == FrameworkConstants.CommonFrameworks.DnxCore50 &&
+                        !string.IsNullOrEmpty(c.Graph.RuntimeIdentifier)).Issues.Where(c => c.Type == CompatibilityIssueType.ReferenceAssemblyNotImplemented).ToArray();
 
-                // Assert
-                Assert.True(brokenPackages.Length >= 1);
-                Assert.True(brokenPackages.Any(c => c.Package.Id.Equals("System.Runtime.WindowsRuntime") && c.AssemblyName.Equals("System.Runtime.WindowsRuntime")));
+                    // Assert
+                    Assert.True(brokenPackages.Length >= 1);
+                    Assert.True(brokenPackages.Any(c => c.Package.Id.Equals("System.Runtime.WindowsRuntime") && c.AssemblyName.Equals("System.Runtime.WindowsRuntime")));
+                }
             }
         }
 
@@ -1811,22 +1922,25 @@ namespace NuGet.Commands.FuncTest
                 var lockFile = lockFileFormat.Parse(lockFileContent, "In Memory");
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.ExistingLockFile = lockFile;
+                    request.ExistingLockFile = lockFile;
 
-                // Act
-                var command = new RestoreCommand(request);
-                var result = await command.ExecuteAsync();
-                var installed = result.GetAllInstalled();
+                    // Act
+                    var command = new RestoreCommand(request);
+                    var result = await command.ExecuteAsync();
+                    var installed = result.GetAllInstalled();
 
-                // Assert
-                Assert.Equal(1, installed.Count);
-                Assert.Equal("System.Runtime", installed.Single().Name);
-                Assert.Equal(4, installed.Single().Version.Major);
-                Assert.Equal(0, installed.Single().Version.Minor);
-                Assert.Equal(20, installed.Single().Version.Patch);
-                // Don't assert the pre-release tag since it may vary
+                    // Assert
+                    Assert.Equal(1, installed.Count);
+                    Assert.Equal("System.Runtime", installed.Single().Name);
+                    Assert.Equal(4, installed.Single().Version.Major);
+                    Assert.Equal(0, installed.Single().Version.Minor);
+                    Assert.Equal(20, installed.Single().Version.Patch);
+                    // Don't assert the pre-release tag since it may vary
+                }
             }
         }
 
@@ -1935,16 +2049,19 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
 
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
 
-                // Act & Assert
-                var ex = await Assert.ThrowsAsync<FatalProtocolException>(async () => await command.ExecuteAsync());
-                Assert.NotNull(ex);
+                    // Act & Assert
+                    var ex = await Assert.ThrowsAsync<FatalProtocolException>(async () => await command.ExecuteAsync());
+                    Assert.NotNull(ex);
+                }
             }
         }
 

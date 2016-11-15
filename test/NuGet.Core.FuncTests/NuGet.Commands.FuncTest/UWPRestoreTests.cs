@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using NuGet.Commands.Test;
 using NuGet.Configuration;
 using NuGet.ProjectModel;
+using NuGet.Protocol.Core.Types;
 using NuGet.Test.Utility;
 using Xunit;
 
@@ -92,21 +93,24 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
 
-                // Act
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
+                    // Act
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
 
-                // Assert
-                Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(0, logger.Warnings);
-                Assert.Equal(5, result.GetAllInstalled().Count);
+                    // Assert
+                    Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
+                    Assert.Equal(0, logger.Errors);
+                    Assert.Equal(0, logger.Warnings);
+                    Assert.Equal(5, result.GetAllInstalled().Count);
+                }
             }
         }
 
@@ -145,26 +149,29 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger)
+                using (var cacheContext = new SourceCacheContext())
                 {
-                    XmlDocFileSaveMode = Packaging.XmlDocFileSaveMode.None
-                };
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger)
+                    {
+                        XmlDocFileSaveMode = Packaging.XmlDocFileSaveMode.None
+                    };
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
 
-                // Act
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
+                    // Act
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
 
-                var lockFileJson = JObject.Parse(File.OpenText(request.LockFilePath).ReadToEnd());
+                    var lockFileJson = JObject.Parse(File.OpenText(request.LockFilePath).ReadToEnd());
 
-                // Assert
-                Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(0, logger.Warnings);
-                Assert.Equal(118, result.GetAllInstalled().Count);
+                    // Assert
+                    Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
+                    Assert.Equal(0, logger.Errors);
+                    Assert.Equal(0, logger.Warnings);
+                    Assert.Equal(118, result.GetAllInstalled().Count);
+                }
             }
         }
 
@@ -196,20 +203,23 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
 
-                // Act
-                var result = await command.ExecuteAsync();
-                var result2 = await command.ExecuteAsync();
+                    // Act
+                    var result = await command.ExecuteAsync();
+                    var result2 = await command.ExecuteAsync();
 
-                // Assert
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(0, logger.Warnings);
-                Assert.Equal(result.LockFile, result2.LockFile);
+                    // Assert
+                    Assert.Equal(0, logger.Errors);
+                    Assert.Equal(0, logger.Warnings);
+                    Assert.Equal(result.LockFile, result2.LockFile);
+                }
             }
         }
 
@@ -237,22 +247,25 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
 
-                // Act
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
+                    // Act
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
 
-                var lockFileJson = JObject.Parse(File.OpenText(request.LockFilePath).ReadToEnd());
+                    var lockFileJson = JObject.Parse(File.OpenText(request.LockFilePath).ReadToEnd());
 
-                // Assert
-                Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(0, logger.Warnings);
+                    // Assert
+                    Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
+                    Assert.Equal(0, logger.Errors);
+                    Assert.Equal(0, logger.Warnings);
+                }
             }
         }
 
@@ -288,36 +301,39 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
-
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
-
-                var expectedStream = GetResource("NuGet.Commands.FuncTest.compiler.resources.uwpBlankAppV2.json");
-
-                JObject expectedJson = null;
-
-                using (var reader = new StreamReader(expectedStream))
+                using (var cacheContext = new SourceCacheContext())
                 {
-                    expectedJson = JObject.Parse(reader.ReadToEnd());
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
+
+                    var expectedStream = GetResource("NuGet.Commands.FuncTest.compiler.resources.uwpBlankAppV2.json");
+
+                    JObject expectedJson = null;
+
+                    using (var reader = new StreamReader(expectedStream))
+                    {
+                        expectedJson = JObject.Parse(reader.ReadToEnd());
+                    }
+
+                    // Act
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
+
+                    var lockFileJson = JObject.Parse(File.OpenText(request.LockFilePath).ReadToEnd());
+                    RemovePackageFolders(lockFileJson);
+
+                    // Assert
+                    Assert.True(result.Success);
+                    Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
+                    Assert.Equal(0, logger.Errors);
+                    Assert.Equal(0, logger.Warnings);
+                    Assert.Equal(118, result.GetAllInstalled().Count);
+
+                    Assert.Equal(expectedJson.ToString(), lockFileJson.ToString());
                 }
-
-                // Act
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
-
-                var lockFileJson = JObject.Parse(File.OpenText(request.LockFilePath).ReadToEnd());
-                RemovePackageFolders(lockFileJson);
-
-                // Assert
-                Assert.True(result.Success);
-                Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(0, logger.Warnings);
-                Assert.Equal(118, result.GetAllInstalled().Count);
-
-                Assert.Equal(expectedJson.ToString(), lockFileJson.ToString());
             }
         }
 
@@ -353,39 +369,42 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
-
-                // Set the lock file version to v1 to force a downgrade
-                request.LockFileVersion = 1;
-
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
-
-                var expectedStream = GetResource("NuGet.Commands.FuncTest.compiler.resources.uwpBlankAppV1.json");
-
-                JObject expectedJson = null;
-
-                using (var reader = new StreamReader(expectedStream))
+                using (var cacheContext = new SourceCacheContext())
                 {
-                    expectedJson = JObject.Parse(reader.ReadToEnd());
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+
+                    // Set the lock file version to v1 to force a downgrade
+                    request.LockFileVersion = 1;
+
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
+
+                    var expectedStream = GetResource("NuGet.Commands.FuncTest.compiler.resources.uwpBlankAppV1.json");
+
+                    JObject expectedJson = null;
+
+                    using (var reader = new StreamReader(expectedStream))
+                    {
+                        expectedJson = JObject.Parse(reader.ReadToEnd());
+                    }
+
+                    // Act
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
+
+                    var lockFileJson = JObject.Parse(File.OpenText(request.LockFilePath).ReadToEnd());
+                    RemovePackageFolders(lockFileJson);
+
+                    // Assert
+                    Assert.True(result.Success);
+                    Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
+                    Assert.Equal(0, logger.Errors);
+                    Assert.Equal(0, logger.Warnings);
+                    Assert.Equal(118, result.GetAllInstalled().Count);
+
+                    Assert.Equal(expectedJson.ToString(), lockFileJson.ToString());
                 }
-
-                // Act
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
-
-                var lockFileJson = JObject.Parse(File.OpenText(request.LockFilePath).ReadToEnd());
-                RemovePackageFolders(lockFileJson);
-
-                // Assert
-                Assert.True(result.Success);
-                Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(0, logger.Warnings);
-                Assert.Equal(118, result.GetAllInstalled().Count);
-
-                Assert.Equal(expectedJson.ToString(), lockFileJson.ToString());
             }
         }
 
@@ -421,21 +440,24 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
 
-                // Act
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
+                    // Act
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
 
-                // Assert
-                Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
-                Assert.True(0 == logger.Errors, logger.ShowMessages());
-                Assert.Equal(0, logger.Warnings);
-                Assert.Equal(86, result.GetAllInstalled().Count);
+                    // Assert
+                    Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
+                    Assert.True(0 == logger.Errors, logger.ShowMessages());
+                    Assert.Equal(0, logger.Warnings);
+                    Assert.Equal(86, result.GetAllInstalled().Count);
+                }
             }
         }
 
@@ -479,21 +501,24 @@ namespace NuGet.Commands.FuncTest
                 var spec = JsonPackageSpecReader.GetPackageSpec(configJson.ToString(), "TestProject", specPath);
 
                 var logger = new TestLogger();
-                var request = new TestRestoreRequest(spec, sources, packagesDir, logger);
-                request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
+                using (var cacheContext = new SourceCacheContext())
+                {
+                    var request = new TestRestoreRequest(spec, sources, packagesDir, cacheContext, logger);
+                    request.LockFilePath = Path.Combine(projectDir, "project.lock.json");
 
-                var lockFileFormat = new LockFileFormat();
-                var command = new RestoreCommand(request);
+                    var lockFileFormat = new LockFileFormat();
+                    var command = new RestoreCommand(request);
 
-                // Act
-                var result = await command.ExecuteAsync();
-                await result.CommitAsync(logger, CancellationToken.None);
+                    // Act
+                    var result = await command.ExecuteAsync();
+                    await result.CommitAsync(logger, CancellationToken.None);
 
-                // Assert
-                Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
-                Assert.Equal(0, logger.Errors);
-                Assert.Equal(0, logger.Warnings);
-                Assert.Equal(140, result.GetAllInstalled().Count);
+                    // Assert
+                    Assert.Equal(0, result.CompatibilityCheckResults.Sum(checkResult => checkResult.Issues.Count));
+                    Assert.Equal(0, logger.Errors);
+                    Assert.Equal(0, logger.Warnings);
+                    Assert.Equal(140, result.GetAllInstalled().Count);
+                }
             }
         }
 
