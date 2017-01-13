@@ -1,0 +1,30 @@
+{
+  "version": "4.0.0-*",
+  "dependencies": {
+    "NuGet.Signing": {
+      "target": "project"
+    },
+    "NuGet.Test.Utility": {
+      "target": "project"
+    },
+    "System.Security.Cryptography.Pkcs": "4.3.0",
+    "xunit": "2.1.0"
+  },
+  "frameworks": {
+    "net46": {
+      "frameworkAssemblies": {
+        "Microsoft.CSharp": "",
+        "System": "",
+        "System.Core": "",
+        "System.Runtime": "",
+        "System.Threading.Tasks": ""
+      },
+      "buildOptions": {
+        "define": [
+          "IS_DESKTOP"
+        ]
+      }
+    }
+  },
+  "testRunner": "xunit"
+}

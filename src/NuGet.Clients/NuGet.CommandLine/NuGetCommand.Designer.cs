@@ -11441,6 +11441,159 @@ namespace NuGet.CommandLine {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Generates a detached file signature for a package..
+        /// </summary>
+        internal static string SignCommandDescription {
+            get {
+                return ResourceManager.GetString("SignCommandDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Signature file identifier..
+        /// </summary>
+        internal static string SignCommandFileIdentifierDescription {
+            get {
+                return ResourceManager.GetString("SignCommandFileIdentifierDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The public key fingerprint of the signing certificate..
+        /// </summary>
+        internal static string SignCommandFingerprintDescription {
+            get {
+                return ResourceManager.GetString("SignCommandFingerprintDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specifies if the certificate store is under the local machine account (true).  The default is to use the current user account (false)..
+        /// </summary>
+        internal static string SignCommandIsLocalMachineStoreDescription {
+            get {
+                return ResourceManager.GetString("SignCommandIsLocalMachineStoreDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Path to a signature request file..
+        /// </summary>
+        internal static string SignCommandRequestPathDescription {
+            get {
+                return ResourceManager.GetString("SignCommandRequestPathDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Secret passphrase for certificate..
+        /// </summary>
+        internal static string SignCommandSecretPassphraseDescription {
+            get {
+                return ResourceManager.GetString("SignCommandSecretPassphraseDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Path to a certificate file..
+        /// </summary>
+        internal static string SignCommandSecretPathDescription {
+            get {
+                return ResourceManager.GetString("SignCommandSecretPathDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name of the certificate store containing the signing certificate.
+        /// </summary>
+        internal static string SignCommandStoreNameDescription {
+            get {
+                return ResourceManager.GetString("SignCommandStoreNameDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The subject name of the signing certificate.  Supports substring matching..
+        /// </summary>
+        internal static string SignCommandSubjectNameDescription {
+            get {
+                return ResourceManager.GetString("SignCommandSubjectNameDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specify the path to the package and the signing certificate..
+        /// </summary>
+        internal static string SignCommandUsageDescription {
+            get {
+                return ResourceManager.GetString("SignCommandUsageDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget sign mypackage.1.0.0.nupkg https://rfc3161tsa -certificate signing.cer.
+        /// </summary>
+        internal static string SignCommandUsageExamples {
+            get {
+                return ResourceManager.GetString("SignCommandUsageExamples", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;package path&gt; &lt;timestamp server URI&gt; [options].
+        /// </summary>
+        internal static string SignCommandUsageSummary {
+            get {
+                return ResourceManager.GetString("SignCommandUsageSummary", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Generates a signature request file for a package..
+        /// </summary>
+        internal static string SignRequestCommandDescription {
+            get {
+                return ResourceManager.GetString("SignRequestCommandDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Signature file identifier..
+        /// </summary>
+        internal static string SignRequestCommandFileIdentifierDescription {
+            get {
+                return ResourceManager.GetString("SignRequestCommandFileIdentifierDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specify the path to the package.
+        /// </summary>
+        internal static string SignRequestCommandUsageDescription {
+            get {
+                return ResourceManager.GetString("SignRequestCommandUsageDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget signrequest mypackage.1.0.0.nupkg.
+        /// </summary>
+        internal static string SignRequestCommandUsageExamples {
+            get {
+                return ResourceManager.GetString("SignRequestCommandUsageExamples", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;package path&gt; [options].
+        /// </summary>
+        internal static string SignRequestCommandUsageSummary {
+            get {
+                return ResourceManager.GetString("SignRequestCommandUsageSummary", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Provides the ability to manage list of sources located in %AppData%\NuGet\NuGet.config.
         /// </summary>
         internal static string SourcesCommandDescription {
@@ -14465,6 +14618,51 @@ namespace NuGet.CommandLine {
         internal static string UpdateCommandVersionDescription {
             get {
                 return ResourceManager.GetString("UpdateCommandVersionDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to View package details..
+        /// </summary>
+        internal static string ViewCommandDescription {
+            get {
+                return ResourceManager.GetString("ViewCommandDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specify the path to a detached signature file..
+        /// </summary>
+        internal static string ViewCommandSignatureDescription {
+            get {
+                return ResourceManager.GetString("ViewCommandSignatureDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specify the path to the package..
+        /// </summary>
+        internal static string ViewCommandUsageDescription {
+            get {
+                return ResourceManager.GetString("ViewCommandUsageDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to nuget view mypackage.1.0.0.nupkg.
+        /// </summary>
+        internal static string ViewCommandUsageExamples {
+            get {
+                return ResourceManager.GetString("ViewCommandUsageExamples", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;package path&gt; &lt;timestamp server URI&gt; [options].
+        /// </summary>
+        internal static string ViewCommandUsageSummary {
+            get {
+                return ResourceManager.GetString("ViewCommandUsageSummary", resourceCulture);
             }
         }
     }

@@ -24,6 +24,7 @@ NuGet.Protocol.Core.v3.dll
 NuGet.Repositories.dll
 NuGet.Resolver.dll
 NuGet.RuntimeModel.dll
+NuGet.Signing.dll
 NuGet.Versioning.dll
 
 # Merge this one last so that duplicate types from 3.x are preferred.

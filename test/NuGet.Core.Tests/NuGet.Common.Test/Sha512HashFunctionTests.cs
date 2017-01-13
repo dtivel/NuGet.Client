@@ -5,7 +5,7 @@ using System;
 using System.Text;
 using Xunit;
 
-namespace NuGet.ProjectModel.Test
+namespace NuGet.Common.Test
 {
     public class Sha512HashFunctionTests
     {
@@ -22,7 +22,8 @@ namespace NuGet.ProjectModel.Test
                     hashFunc.Update(_input, i, count: 1);
                 }
 
-                var actualResult = hashFunc.GetHash();
+                var hash = hashFunc.GetHash();
+                var actualResult = Convert.ToBase64String(hash);
 
                 Assert.Equal(_expectedResult, actualResult);
             }

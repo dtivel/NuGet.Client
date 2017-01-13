@@ -4,16 +4,16 @@
 using System;
 using System.Security.Cryptography;
 
-namespace NuGet.ProjectModel
+namespace NuGet.Common
 {
     /// <summary>
     /// A SHA-512 hash function that supports incremental hashing.
-    /// 
-    /// This is non-private only to facilitate unit testing.
+    ///
+    /// This is public only to facilitate unit testing.
     /// </summary>
     public sealed class Sha512HashFunction : IHashFunction
     {
-        private string _hash;
+        private byte[] _hash;
 
 #if IS_DESKTOP
         private readonly SHA512 _hashFunc;
@@ -33,13 +33,13 @@ namespace NuGet.ProjectModel
             _hashFunc.TransformBlock(data, offset, count, outputBuffer: null, outputOffset: 0);
         }
 
-        public string GetHash()
+        public byte[] GetHash()
         {
             if (_hash == null)
             {
                 _hashFunc.TransformFinalBlock(new byte[0], inputOffset: 0, inputCount: 0);
 
-                _hash = Convert.ToBase64String(_hashFunc.Hash);
+                _hash = _hashFunc.Hash;
             }
 
             return _hash;
@@ -63,13 +63,11 @@ namespace NuGet.ProjectModel
             _hashFunc.AppendData(data, offset, count);
         }
 
-        public string GetHash()
+        public byte[] GetHash()
         {
             if (_hash == null)
             {
-                var hash = _hashFunc.GetHashAndReset();
-
-                _hash = Convert.ToBase64String(hash);
+                _hash = _hashFunc.GetHashAndReset();
             }
 
             return _hash;

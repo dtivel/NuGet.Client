@@ -1,0 +1,30 @@
+{
+  "version": "4.0.0-*",
+  "dependencies": {
+    "NuGet.Signing": {
+      "target": "project"
+    },
+    "NuGet.Test.Utility": {
+      "target": "project"
+    },
+    "xunit": "2.1.0"
+  },
+  "frameworks": {
+    "net46": {
+      "frameworkAssemblies": {
+        "Microsoft.CSharp": "",
+        "System": "",
+        "System.Core": "",
+        "System.Runtime": "",
+        "System.Threading": "",
+        "System.Threading.Tasks": ""
+      },
+      "buildOptions": {
+        "define": [
+          "IS_DESKTOP"
+        ]
+      }
+    }
+  },
+  "testRunner": "xunit"
+}

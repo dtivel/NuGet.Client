@@ -12,7 +12,8 @@
     <FileAlignment>512</FileAlignment>
     <RestoreNuGetPackages>true</RestoreNuGetPackages>
     <AssemblyOriginatorKeyFile>$(MS_PFX_PATH)</AssemblyOriginatorKeyFile>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\..\NuGet.Core\NuGet.Build.Tasks\NuGet.targets">
@@ -52,9 +53,12 @@
     <Compile Include="Commands\PushCommand.cs" />
     <Compile Include="Commands\RestoreCommand.cs" />
     <Compile Include="Commands\SetApiKeyCommand.cs" />
+    <Compile Include="Commands\SignCommand.cs" />
+    <Compile Include="Commands\SignRequestCommand.cs" />
     <Compile Include="Commands\SourcesCommand.cs" />
     <Compile Include="Commands\SpecCommand.cs" />
     <Compile Include="Commands\UpdateCommand.cs" />
+    <Compile Include="Commands\ViewCommand.cs" />
     <Compile Include="Common\CommandLineConstants.cs" />
     <Compile Include="Common\CommandLineException.cs" />
     <Compile Include="Common\CommandLineRepositoryFactory.cs" />

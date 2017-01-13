@@ -3,12 +3,12 @@
 
 using System;
 
-namespace NuGet.ProjectModel
+namespace NuGet.Common
 {
     /// <summary>
     /// Provides incremental hashing.
-    /// 
-    /// This is non-private only to facilitate unit testing.
+    ///
+    /// This is public only to facilitate unit testing.
     /// </summary>
     public interface IHashFunction : IDisposable
     {
@@ -17,8 +17,8 @@ namespace NuGet.ProjectModel
         ///
         /// Once GetHash is called, no further hash updates are allowed.
         /// </summary>
-        /// <returns>A base64-encoded hash.</returns>
-        string GetHash();
+        /// <returns>A hash.</returns>
+        byte[] GetHash();
 
         /// <summary>
         /// Incrementally updates the hash.

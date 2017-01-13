@@ -11072,6 +11072,24 @@ namespace NuGet.CommandLine {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Multiple certificates matched the criteria..
+        /// </summary>
+        public static string SignCommandMultipleCertificatesFound {
+            get {
+                return ResourceManager.GetString("SignCommandMultipleCertificatesFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No certificate matched the criteria..
+        /// </summary>
+        public static string SignCommandNoCertificateFound {
+            get {
+                return ResourceManager.GetString("SignCommandNoCertificateFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Nothing to do. None of the projects in this solution specify any packages for NuGet to restore..
         /// </summary>
         public static string SolutionRestoreCommandNoPackagesConfigOrProjectJson {

@@ -5336,4 +5336,73 @@ nuget locals global-packages -list</value>
   <data name="RestoreCommandRecursive" xml:space="preserve">
     <value>Restore all referenced projects for UWP and NETCore projects. This does not include packages.config projects.</value>
   </data>
+  <data name="SignCommandDescription" xml:space="preserve">
+    <value>Generates a detached file signature for a package.</value>
+  </data>
+  <data name="SignCommandUsageDescription" xml:space="preserve">
+    <value>Specify the path to the package and the signing certificate.</value>
+  </data>
+  <data name="SignCommandUsageExamples" xml:space="preserve">
+    <value>nuget sign mypackage.1.0.0.nupkg https://rfc3161tsa -certificate signing.cer</value>
+    <comment>Please don't localize this string</comment>
+  </data>
+  <data name="SignCommandUsageSummary" xml:space="preserve">
+    <value>&lt;package path&gt; &lt;timestamp server URI&gt; [options]</value>
+  </data>
+  <data name="SignRequestCommandDescription" xml:space="preserve">
+    <value>Generates a signature request file for a package.</value>
+  </data>
+  <data name="SignRequestCommandUsageDescription" xml:space="preserve">
+    <value>Specify the path to the package</value>
+  </data>
+  <data name="SignRequestCommandUsageExamples" xml:space="preserve">
+    <value>nuget signrequest mypackage.1.0.0.nupkg</value>
+    <comment>Please don't localize this.</comment>
+  </data>
+  <data name="SignRequestCommandUsageSummary" xml:space="preserve">
+    <value>&lt;package path&gt; [options]</value>
+  </data>
+  <data name="SignCommandRequestPathDescription" xml:space="preserve">
+    <value>Path to a signature request file.</value>
+  </data>
+  <data name="SignCommandSecretPathDescription" xml:space="preserve">
+    <value>Path to a certificate file.</value>
+  </data>
+  <data name="ViewCommandDescription" xml:space="preserve">
+    <value>View package details.</value>
+  </data>
+  <data name="ViewCommandUsageDescription" xml:space="preserve">
+    <value>Specify the path to the package.</value>
+  </data>
+  <data name="ViewCommandUsageExamples" xml:space="preserve">
+    <value>nuget view mypackage.1.0.0.nupkg</value>
+    <comment>Please don't localize this string</comment>
+  </data>
+  <data name="ViewCommandUsageSummary" xml:space="preserve">
+    <value>&lt;package path&gt; &lt;timestamp server URI&gt; [options]</value>
+  </data>
+  <data name="ViewCommandSignatureDescription" xml:space="preserve">
+    <value>Specify the path to a detached signature file.</value>
+  </data>
+  <data name="SignCommandFingerprintDescription" xml:space="preserve">
+    <value>The public key fingerprint of the signing certificate.</value>
+  </data>
+  <data name="SignCommandIsLocalMachineStoreDescription" xml:space="preserve">
+    <value>Specifies if the certificate store is under the local machine account (true).  The default is to use the current user account (false).</value>
+  </data>
+  <data name="SignCommandStoreNameDescription" xml:space="preserve">
+    <value>Name of the certificate store containing the signing certificate</value>
+  </data>
+  <data name="SignCommandSubjectNameDescription" xml:space="preserve">
+    <value>The subject name of the signing certificate.  Supports substring matching.</value>
+  </data>
+  <data name="SignCommandSecretPassphraseDescription" xml:space="preserve">
+    <value>Secret passphrase for certificate.</value>
+  </data>
+  <data name="SignCommandFileIdentifierDescription" xml:space="preserve">
+    <value>Signature file identifier.</value>
+  </data>
+  <data name="SignRequestCommandFileIdentifierDescription" xml:space="preserve">
+    <value>Signature file identifier.</value>
+  </data>
 </root>

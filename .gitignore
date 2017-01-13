@@ -137,6 +137,8 @@ ClientBin/
 *.dbmdl
 *.[Pp]ublish.xml
 *.pfx
+!/test/NuGet.Core.FuncTests/NuGet.Signing.FuncTest/compiler/resources/*.pfx
+!/test/NuGet.Core.Tests/NuGet.Signing.Test/compiler/resources/*.pfx
 *.publishsettings
 
 # RIA/Silverlight projects

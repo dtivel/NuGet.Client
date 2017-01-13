@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
+using NuGet.Common;
 using NuGet.RuntimeModel;
 
 namespace NuGet.ProjectModel
@@ -12,7 +13,7 @@ namespace NuGet.ProjectModel
     /// <summary>
     /// Generates a hash from an object graph.
     ///
-    /// This is non-private only to facilitate unit testing.
+    /// This is public only to facilitate unit testing.
     /// </summary>
     public sealed class HashObjectWriter : IObjectWriter, IDisposable
     {
@@ -149,7 +150,9 @@ namespace NuGet.ProjectModel
                 _isReadOnly = true;
             }
 
-            return _hashFunc.GetHash();
+            var hash = _hashFunc.GetHash();
+
+            return Convert.ToBase64String(hash);
         }
 
         private void OnFlush(object sender, ArraySegment<byte> bytes)

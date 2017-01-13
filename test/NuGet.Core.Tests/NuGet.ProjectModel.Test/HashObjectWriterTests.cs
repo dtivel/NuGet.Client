@@ -3,6 +3,7 @@
 
 using System;
 using System.Linq;
+using NuGet.Common;
 using Xunit;
 
 namespace NuGet.ProjectModel.Test
