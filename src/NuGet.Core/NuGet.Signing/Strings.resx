@@ -217,4 +217,11 @@
   <data name="UnableToBuildTimestampCertificateChain" xml:space="preserve">
     <value>Unable to build the timestamp certificate chain.</value>
   </data>
+  <data name="InvalidSignatureTargetsInvalidEncoding" xml:space="preserve">
+    <value>The signature targets metadata has invalid encoding.</value>
+  </data>
+  <data name="InvalidAsn1Encoding" xml:space="preserve">
+    <value>ASN.1 encoding for tag 0x{0:X2} is invalid.</value>
+    <comment>{0} is the ASN.1 tag</comment>
+  </data>
 </root>

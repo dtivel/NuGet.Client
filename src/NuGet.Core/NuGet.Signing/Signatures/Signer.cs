@@ -7,6 +7,7 @@ using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using NuGet.Signing.Asn1;
 
 namespace NuGet.Signing
 {
@@ -76,7 +77,7 @@ namespace NuGet.Signing
                 }
             }
 
-            var content = Asn1Utilities.Encode(targets);
+            var content = Encoder.Encode(targets.AsAsn1Value());
             var contentInfo = new ContentInfo(content);
 
             var signer = new CmsSigner(SubjectIdentifierType.SubjectKeyIdentifier, _certificate);

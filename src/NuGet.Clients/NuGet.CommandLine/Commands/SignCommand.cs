@@ -50,7 +50,6 @@ namespace NuGet.CommandLine.Commands
 
             // Do not prompt for a passphrase if no other information about a certificate was provided.
             if (string.IsNullOrEmpty(SecretPath) &&
-                string.IsNullOrEmpty(StoreName) &&
                 string.IsNullOrEmpty(SubjectName) &&
                 string.IsNullOrEmpty(Fingerprint))
             {
@@ -59,13 +58,18 @@ namespace NuGet.CommandLine.Commands
                 return;
             }
 
-            var fileIdentifier = string.IsNullOrEmpty(FileIdentifier) ? null : $".{FileIdentifier}";
+            string fileIdentifier = null;
 
-            if (!DetachedSignatureFileName.IsValidFileIdentifier(fileIdentifier))
+            if (FileIdentifier != null)
             {
-                HelpCommand.ViewHelpForCommand(CommandAttribute.CommandName);
+                fileIdentifier = $".{FileIdentifier}";
 
-                return;
+                if (!DetachedSignatureFileName.IsValidFileIdentifier(fileIdentifier))
+                {
+                    HelpCommand.ViewHelpForCommand(CommandAttribute.CommandName);
+
+                    return;
+                }
             }
 
             X509Certificate2 certificate;

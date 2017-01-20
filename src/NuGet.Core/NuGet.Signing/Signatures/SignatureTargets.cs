@@ -1,7 +1,8 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
+using System.IO;
+using NuGet.Signing.Asn1;
 
 namespace NuGet.Signing
 {
@@ -38,6 +39,53 @@ namespace NuGet.Signing
 
             Version = version;
             SignatureTarget = signatureTarget;
+        }
+
+        internal DerSequence AsAsn1Value()
+        {
+            /*
+                ASN.1 structure:
+
+                SignatureTargets ::= SEQUENCE {
+                  version            INTEGER { v1(1) },
+                  signatureTargets   SignatureTarget }
+            */
+
+            var elements = new Value[]
+            {
+                new DerInteger(Version),
+                SignatureTarget.AsAsn1Value()
+            };
+
+            return new DerSequence(elements);
+        }
+
+        internal static SignatureTargets Decode(byte[] bytes)
+        {
+            Assert.IsNotNullOrEmpty(bytes, nameof(bytes));
+
+            using (var stream = new MemoryStream(bytes, index: 0, count: bytes.Length, writable: false))
+            using (var reader = new BinaryReader(stream))
+            {
+                var signatureTargetsElement = Sequence.Read(reader);
+
+                using (var innerStream = new MemoryStream(signatureTargetsElement.Content, index: 0, count: signatureTargetsElement.Content.Length, writable: false))
+                using (var innerReader = new BinaryReader(innerStream))
+                {
+                    var versionElement = Integer.Read(innerReader);
+                    var signatureTargetElement = Sequence.Read(innerReader);
+
+                    if (versionElement.BigInteger < int.MinValue || versionElement.BigInteger > int.MaxValue)
+                    {
+                        throw new InvalidDataException(Strings.InvalidSignatureTargetsInvalidSignatureTargetsVersion);
+                    }
+
+                    var version = (int)versionElement.BigInteger;
+                    var signatureTarget = SignatureTarget.Decode(signatureTargetElement.Content);
+
+                    return new SignatureTargets(version, signatureTarget);
+                }
+            }
         }
     }
 }

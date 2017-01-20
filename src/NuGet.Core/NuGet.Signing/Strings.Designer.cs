@@ -78,6 +78,15 @@ namespace NuGet.Signing {
         }
         
         /// <summary>
+        ///    Looks up a localized string similar to ASN.1 encoding for tag 0x{0:X2} is invalid..
+        /// </summary>
+        public static string InvalidAsn1Encoding {
+            get {
+                return ResourceManager.GetString("InvalidAsn1Encoding", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///    Looks up a localized string similar to The argument is not valid base64-encoded text..
         /// </summary>
         public static string InvalidBase64Text {
@@ -209,6 +218,15 @@ namespace NuGet.Signing {
         public static string InvalidSignatureTargetsInvalidContentDigestAlgorithm {
             get {
                 return ResourceManager.GetString("InvalidSignatureTargetsInvalidContentDigestAlgorithm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to The signature targets metadata has invalid encoding..
+        /// </summary>
+        public static string InvalidSignatureTargetsInvalidEncoding {
+            get {
+                return ResourceManager.GetString("InvalidSignatureTargetsInvalidEncoding", resourceCulture);
             }
         }
         
