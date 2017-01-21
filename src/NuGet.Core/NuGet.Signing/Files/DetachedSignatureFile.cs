@@ -102,7 +102,7 @@ namespace NuGet.Signing
                 throw new InvalidDataException(Strings.InvalidSignatureContentType);
             }
 
-            var signatureTargets = Asn1Utilities.Decode(signedCms.ContentInfo.Content);
+            var signatureTargets = SignatureTargets.Decode(signedCms.ContentInfo.Content);
 
             return Signature.FromSignedCms(signedCms, signatureTargets);
         }

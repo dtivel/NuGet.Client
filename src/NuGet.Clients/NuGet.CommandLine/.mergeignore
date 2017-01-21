@@ -6,6 +6,7 @@
 *.manifest
 
 # ignore individual unsolicited files
+BouncyCastle.Crypto.dll
 Microsoft.CSharp.dll
 mscorlib.dll
 System.Collections.Concurrent.dll

@@ -76,9 +76,8 @@ namespace NuGet.Signing
                 }
             }
 
-            var content = Asn1Utilities.Encode(targets);
+            var content = targets.ToAsn1Value().GetDerEncoded();
             var contentInfo = new ContentInfo(content);
-
             var signer = new CmsSigner(SubjectIdentifierType.SubjectKeyIdentifier, _certificate);
             var signingTime = new Pkcs9SigningTime();
 

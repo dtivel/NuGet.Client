@@ -2,7 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.IO;
 using NuGet.Packaging.Core;
+using NuGet.Versioning;
+using Org.BouncyCastle.Asn1;
 
 namespace NuGet.Signing
 {
@@ -54,6 +57,57 @@ namespace NuGet.Signing
             Version = version;
             PackageIdentity = packageIdentity;
             ContentDigest = contentDigest;
+        }
+
+        internal DerSequence ToAsn1Value()
+        {
+            return new DerSequence(
+                new DerInteger(Version),
+                new DerUtf8String(PackageIdentity.Id),
+                new DerUtf8String(PackageIdentity.Version.ToFullString()),
+                ContentDigest.ToAsn1Value());
+        }
+
+        internal static SignatureTarget Decode(DerSequence sequence)
+        {
+            if (sequence == null || sequence.Count != 4)
+            {
+                throw new InvalidDataException(Strings.InvalidSignatureTarget);
+            }
+
+            var encodedVersion = sequence[0] as DerInteger;
+
+            if (encodedVersion == null)
+            {
+                throw new InvalidDataException(Strings.InvalidSignatureTarget);
+            }
+
+            var encodedPackageId = sequence[1] as DerUtf8String;
+
+            if (encodedPackageId == null)
+            {
+                throw new InvalidDataException(Strings.InvalidSignatureTarget);
+            }
+
+            var encodedPackageVersion = sequence[2] as DerUtf8String;
+
+            if (encodedPackageVersion == null)
+            {
+                throw new InvalidDataException(Strings.InvalidSignatureTarget);
+            }
+
+            var encodedContentDigest = sequence[3] as DerSequence;
+
+            if (encodedContentDigest == null)
+            {
+                throw new InvalidDataException(Strings.InvalidSignatureTarget);
+            }
+
+            var contentDigest = ContentDigest.Decode(encodedContentDigest);
+            var version = new NuGetVersion(encodedPackageVersion.GetString());
+            var packageIdentity = new PackageIdentity(encodedPackageId.GetString(), version);
+
+            return new SignatureTarget(encodedVersion.Value.IntValue, packageIdentity, contentDigest);
         }
     }
 }

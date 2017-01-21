@@ -37,7 +37,8 @@
         },
         "NuGet.Versioning": {
             "target": "project"
-        }
+        },
+        "Portable.BouncyCastle": "1.8.1.2"
     },
     "frameworks": {
         "net46": {

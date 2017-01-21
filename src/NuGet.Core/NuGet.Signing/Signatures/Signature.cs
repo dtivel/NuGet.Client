@@ -57,17 +57,17 @@ namespace NuGet.Signing
 
             if (signatureTargets.Version != SignatureTargets.CurrentVersion)
             {
-                throw new ArgumentException(Strings.InvalidSignatureTargetsInvalidSignatureTargetsVersion, nameof(signatureTargets));
+                throw new ArgumentException(Strings.InvalidSignatureTargetsVersion, nameof(signatureTargets));
             }
 
             if (signatureTargets.SignatureTarget.Version != SignatureTarget.CurrentVersion)
             {
-                throw new ArgumentException(Strings.InvalidSignatureTargetsInvalidSignatureTargetVersion, nameof(signatureTargets));
+                throw new ArgumentException(Strings.InvalidSignatureTargetVersion, nameof(signatureTargets));
             }
 
             if (signatureTargets.SignatureTarget.ContentDigest.DigestAlgorithm.Value != Constants.Sha512Oid)
             {
-                throw new ArgumentException(Strings.InvalidSignatureTargetsInvalidContentDigestAlgorithm, nameof(signatureTargets));
+                throw new ArgumentException(Strings.InvalidContentDigestAlgorithm, nameof(signatureTargets));
             }
 
             var signerInfo = signedCms.SignerInfos[0];

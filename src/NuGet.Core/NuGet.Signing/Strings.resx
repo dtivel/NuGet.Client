@@ -157,33 +157,6 @@
   <data name="InvalidPackageIdentity" xml:space="preserve">
     <value>The package identity is invalid.</value>
   </data>
-  <data name="InvalidSignatureTargetsIntegerNotFound" xml:space="preserve">
-    <value>The signature target metadata is invalid.  An integer was expected but not found.</value>
-  </data>
-  <data name="InvalidSignatureTargetsInvalidVersionString" xml:space="preserve">
-    <value>The signature target metadata is invalid.  The value is not a valid version string.</value>
-  </data>
-  <data name="InvalidSignatureTargetsObjectIdentifierNotFound" xml:space="preserve">
-    <value>The signature target metadata is invalid.  An object identifier was expected but not found.</value>
-  </data>
-  <data name="InvalidSignatureTargetsOctetSequenceNotFound" xml:space="preserve">
-    <value>The signature target metadata is invalid.  An octet sequence was expected but not found.</value>
-  </data>
-  <data name="InvalidSignatureTargetsSequenceNotFound" xml:space="preserve">
-    <value>The signature target metadata is invalid.  A sequence was expected but not found.</value>
-  </data>
-  <data name="InvalidSignatureTargetsUnexpectedDataAfterContentDigest" xml:space="preserve">
-    <value>The signature target metadata is invalid.  Unexpected data was found after decoding a content digest.</value>
-  </data>
-  <data name="InvalidSignatureTargetsUnexpectedDataAfterSignatureTarget" xml:space="preserve">
-    <value>The signature target metadata is invalid.  Unexpected data was found after decoding a signature target.</value>
-  </data>
-  <data name="InvalidSignatureTargetsUnexpectedVersionLength" xml:space="preserve">
-    <value>The signature target metadata is invalid.  A version length of 1 was expected but not found.</value>
-  </data>
-  <data name="InvalidSignatureTargetsUtf8StringNotFound" xml:space="preserve">
-    <value>The signature target metadata is invalid.  A UTF-8 string was expected but not found.</value>
-  </data>
   <data name="InvalidPemEncodedTextInvalidBase64Data" xml:space="preserve">
     <value>PEM decoding failed.  The base64 data is invalid.</value>
   </data>
@@ -199,22 +172,31 @@
   <data name="InvalidSignatureContentType" xml:space="preserve">
     <value>The signature's content type was unexpected.</value>
   </data>
-  <data name="InvalidSignatureTargetsInvalidSignatureTargetsVersion" xml:space="preserve">
-    <value>The signature targets' version is invalid.</value>
+  <data name="InvalidSignatureTargetsVersion" xml:space="preserve">
+    <value>The SignatureTargets' version is invalid.</value>
   </data>
-  <data name="InvalidSignatureTargetsInvalidSignatureTargetVersion" xml:space="preserve">
-    <value>The signature target's version is invalid.</value>
+  <data name="InvalidSignatureTargetVersion" xml:space="preserve">
+    <value>The SignatureTarget's version is invalid.</value>
   </data>
   <data name="InvalidSignedDataMessage" xml:space="preserve">
     <value>Invalid SignedData CMS message.  Exactly one signer is required.</value>
   </data>
-  <data name="InvalidSignatureTargetsInvalidContentDigestAlgorithm" xml:space="preserve">
-    <value>The signature target's content digest algorithm is invalid.</value>
+  <data name="InvalidContentDigestAlgorithm" xml:space="preserve">
+    <value>The ContentDigest's digest algorithm is invalid.</value>
   </data>
   <data name="ArgumentMustNotBeEmpty" xml:space="preserve">
     <value>The argument must not be empty.</value>
   </data>
   <data name="UnableToBuildTimestampCertificateChain" xml:space="preserve">
     <value>Unable to build the timestamp certificate chain.</value>
+  </data>
+  <data name="InvalidSignatureTargets" xml:space="preserve">
+    <value>The SignatureTargets data is invalid.</value>
+  </data>
+  <data name="InvalidContentDigest" xml:space="preserve">
+    <value>The ContentDigest data is invalid.</value>
+  </data>
+  <data name="InvalidSignatureTarget" xml:space="preserve">
+    <value>The SignatureTarget data is invalid.</value>
   </data>
 </root>

@@ -96,6 +96,24 @@ namespace NuGet.Signing {
         }
         
         /// <summary>
+        ///    Looks up a localized string similar to The ContentDigest data is invalid..
+        /// </summary>
+        public static string InvalidContentDigest {
+            get {
+                return ResourceManager.GetString("InvalidContentDigest", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to The ContentDigest&apos;s digest algorithm is invalid..
+        /// </summary>
+        public static string InvalidContentDigestAlgorithm {
+            get {
+                return ResourceManager.GetString("InvalidContentDigestAlgorithm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///    Looks up a localized string similar to The file identifier in the detached signature file name must be a period followed by one or more word characters with a total length not exceeding 32 characters..
         /// </summary>
         public static string InvalidDetachedSignatureFileIdentifier {
@@ -195,110 +213,38 @@ namespace NuGet.Signing {
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to The signature target metadata is invalid.  An integer was expected but not found..
+        ///    Looks up a localized string similar to The SignatureTarget data is invalid..
         /// </summary>
-        public static string InvalidSignatureTargetsIntegerNotFound {
+        public static string InvalidSignatureTarget {
             get {
-                return ResourceManager.GetString("InvalidSignatureTargetsIntegerNotFound", resourceCulture);
+                return ResourceManager.GetString("InvalidSignatureTarget", resourceCulture);
             }
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to The signature target&apos;s content digest algorithm is invalid..
+        ///    Looks up a localized string similar to The SignatureTargets data is invalid..
         /// </summary>
-        public static string InvalidSignatureTargetsInvalidContentDigestAlgorithm {
+        public static string InvalidSignatureTargets {
             get {
-                return ResourceManager.GetString("InvalidSignatureTargetsInvalidContentDigestAlgorithm", resourceCulture);
+                return ResourceManager.GetString("InvalidSignatureTargets", resourceCulture);
             }
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to The signature targets&apos; version is invalid..
+        ///    Looks up a localized string similar to The SignatureTargets&apos; version is invalid..
         /// </summary>
-        public static string InvalidSignatureTargetsInvalidSignatureTargetsVersion {
+        public static string InvalidSignatureTargetsVersion {
             get {
-                return ResourceManager.GetString("InvalidSignatureTargetsInvalidSignatureTargetsVersion", resourceCulture);
+                return ResourceManager.GetString("InvalidSignatureTargetsVersion", resourceCulture);
             }
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to The signature target&apos;s version is invalid..
+        ///    Looks up a localized string similar to The SignatureTarget&apos;s version is invalid..
         /// </summary>
-        public static string InvalidSignatureTargetsInvalidSignatureTargetVersion {
+        public static string InvalidSignatureTargetVersion {
             get {
-                return ResourceManager.GetString("InvalidSignatureTargetsInvalidSignatureTargetVersion", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///    Looks up a localized string similar to The signature target metadata is invalid.  The value is not a valid version string..
-        /// </summary>
-        public static string InvalidSignatureTargetsInvalidVersionString {
-            get {
-                return ResourceManager.GetString("InvalidSignatureTargetsInvalidVersionString", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///    Looks up a localized string similar to The signature target metadata is invalid.  An object identifier was expected but not found..
-        /// </summary>
-        public static string InvalidSignatureTargetsObjectIdentifierNotFound {
-            get {
-                return ResourceManager.GetString("InvalidSignatureTargetsObjectIdentifierNotFound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///    Looks up a localized string similar to The signature target metadata is invalid.  An octet sequence was expected but not found..
-        /// </summary>
-        public static string InvalidSignatureTargetsOctetSequenceNotFound {
-            get {
-                return ResourceManager.GetString("InvalidSignatureTargetsOctetSequenceNotFound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///    Looks up a localized string similar to The signature target metadata is invalid.  A sequence was expected but not found..
-        /// </summary>
-        public static string InvalidSignatureTargetsSequenceNotFound {
-            get {
-                return ResourceManager.GetString("InvalidSignatureTargetsSequenceNotFound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///    Looks up a localized string similar to The signature target metadata is invalid.  Unexpected data was found after decoding a content digest..
-        /// </summary>
-        public static string InvalidSignatureTargetsUnexpectedDataAfterContentDigest {
-            get {
-                return ResourceManager.GetString("InvalidSignatureTargetsUnexpectedDataAfterContentDigest", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///    Looks up a localized string similar to The signature target metadata is invalid.  Unexpected data was found after decoding a signature target..
-        /// </summary>
-        public static string InvalidSignatureTargetsUnexpectedDataAfterSignatureTarget {
-            get {
-                return ResourceManager.GetString("InvalidSignatureTargetsUnexpectedDataAfterSignatureTarget", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///    Looks up a localized string similar to The signature target metadata is invalid.  A version length of 1 was expected but not found..
-        /// </summary>
-        public static string InvalidSignatureTargetsUnexpectedVersionLength {
-            get {
-                return ResourceManager.GetString("InvalidSignatureTargetsUnexpectedVersionLength", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///    Looks up a localized string similar to The signature target metadata is invalid.  A UTF-8 string was expected but not found..
-        /// </summary>
-        public static string InvalidSignatureTargetsUtf8StringNotFound {
-            get {
-                return ResourceManager.GetString("InvalidSignatureTargetsUtf8StringNotFound", resourceCulture);
+                return ResourceManager.GetString("InvalidSignatureTargetVersion", resourceCulture);
             }
         }
         

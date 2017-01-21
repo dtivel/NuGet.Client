@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.IO;
 using System.Security.Cryptography;
+using Org.BouncyCastle.Asn1;
 
 namespace NuGet.Signing
 {
@@ -36,6 +38,37 @@ namespace NuGet.Signing
 
             DigestAlgorithm = digestAlgorithm;
             Digest = digest;
+        }
+
+        internal DerSequence ToAsn1Value()
+        {
+            return new DerSequence(
+                new DerObjectIdentifier(DigestAlgorithm.Value),
+                new DerOctetString(Digest));
+        }
+
+        internal static ContentDigest Decode(DerSequence sequence)
+        {
+            if (sequence == null || sequence.Count != 2)
+            {
+                throw new InvalidDataException(Strings.InvalidContentDigest);
+            }
+
+            var encodedDigestAlgorithm = sequence[0] as DerObjectIdentifier;
+
+            if (encodedDigestAlgorithm == null)
+            {
+                throw new InvalidDataException(Strings.InvalidContentDigest);
+            }
+
+            var encodedDigest = sequence[1] as DerOctetString;
+
+            if (encodedDigest == null)
+            {
+                throw new InvalidDataException(Strings.InvalidContentDigest);
+            }
+
+            return new ContentDigest(new Oid(encodedDigestAlgorithm.Id), encodedDigest.GetOctets());
         }
     }
 }
