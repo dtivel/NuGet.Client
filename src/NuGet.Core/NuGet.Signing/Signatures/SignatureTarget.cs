@@ -64,7 +64,7 @@ namespace NuGet.Signing
             return new DerSequence(
                 new DerInteger(Version),
                 new DerUtf8String(PackageIdentity.Id),
-                new DerUtf8String(PackageIdentity.Version.ToFullString()),
+                new DerUtf8String(PackageIdentity.Version.ToNormalizedString()),
                 ContentDigest.ToAsn1Value());
         }
 
